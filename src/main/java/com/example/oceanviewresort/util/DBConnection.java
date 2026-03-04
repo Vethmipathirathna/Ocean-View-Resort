@@ -21,20 +21,32 @@ public class DBConnection {
     private final String driverClass;
 
     private DBConnection() {
-        Properties props = new Properties();
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("db.properties")) {
-            if (is == null) {
-                throw new RuntimeException("db.properties not found on classpath.");
-            }
-            props.load(is);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load db.properties: " + e.getMessage(), e);
-        }
+        // Environment variables take priority (used in CI/CD)
+        String envUrl      = System.getenv("DB_URL");
+        String envUser     = System.getenv("DB_USERNAME");
+        String envPassword = System.getenv("DB_PASSWORD");
 
-        this.url         = props.getProperty("db.url");
-        this.username    = props.getProperty("db.username");
-        this.password    = props.getProperty("db.password");
-        this.driverClass = props.getProperty("db.driver");
+        if (envUrl != null && envUser != null) {
+            this.url         = envUrl;
+            this.username    = envUser;
+            this.password    = envPassword != null ? envPassword : "";
+            this.driverClass = "com.mysql.cj.jdbc.Driver";
+        } else {
+            // Fall back to db.properties for local development
+            Properties props = new Properties();
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream("db.properties")) {
+                if (is == null) {
+                    throw new RuntimeException("db.properties not found on classpath.");
+                }
+                props.load(is);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load db.properties: " + e.getMessage(), e);
+            }
+            this.url         = props.getProperty("db.url");
+            this.username    = props.getProperty("db.username");
+            this.password    = props.getProperty("db.password");
+            this.driverClass = props.getProperty("db.driver");
+        }
 
         try {
             Class.forName(driverClass);
