@@ -258,6 +258,14 @@
         }
         .btn-save:hover { background: var(--primary-d); }
 
+        /* ===== MANAGE BUTTON ===== */
+        .btn-manage {
+            background: #f1f5f9; color: var(--text); border: 1px solid var(--border);
+            padding: 6px 16px; border-radius: 7px; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all .15s;
+        }
+        .btn-manage:hover { background: #e2e8f0; border-color: #94a3b8; }
+
         /* ===== TOAST ===== */
         #toast {
             position: fixed; bottom: 24px; right: 24px;
@@ -295,7 +303,7 @@
 
         <div class="nav-section-label" style="margin-top:12px;">Operations</div>
         <a class="nav-item" href="#"><span class="ni">&#128716;</span> Bookings</a>
-        <a class="nav-item" href="#"><span class="ni">&#127968;</span> Rooms</a>
+        <a class="nav-item" data-page="rooms" href="#" onclick="showPage('rooms');return false;"><span class="ni">&#127968;</span> Rooms</a>
         <a class="nav-item" href="#"><span class="ni">&#128203;</span> Reports</a>
         <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
     </nav>
@@ -337,12 +345,12 @@
                     <div class="s-sub">Coming soon</div>
                 </div>
             </div>
-            <div class="stat">
+            <div class="stat" style="cursor:pointer" onclick="showPage('rooms')">
                 <div class="stat-icon si-green">&#127968;</div>
                 <div class="stat-info">
                     <div class="s-label">Available Rooms</div>
-                    <div class="s-value"></div>
-                    <div class="s-sub">Coming soon</div>
+                    <div class="s-value" id="statRooms">0</div>
+                    <div class="s-sub">Total available</div>
                 </div>
             </div>
             <div class="stat">
@@ -402,6 +410,36 @@
     </div><!-- /#page-receptionists -->
     <% } %>
 
+    <!-- ===== VIEW: ROOMS ===== -->
+    <div id="page-rooms" style="display:none;">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>All Rooms</h2>
+                <% if ("admin".equalsIgnoreCase(role)) { %>
+                <button class="btn-add-new" onclick="openAddRoomModal()">&#43; Add Room</button>
+                <% } %>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Room No.</th>
+                        <th>Type</th>
+                        <th>Price / Night</th>
+                        <th>Capacity</th>
+                        <th>Status</th>
+                        <% if ("admin".equalsIgnoreCase(role)) { %>
+                        <th>Actions</th>
+                        <% } %>
+                    </tr>
+                </thead>
+                <tbody id="roomBody">
+                    <tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /#page-rooms -->
+
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
 
@@ -436,11 +474,63 @@
     </div>
 </div>
 
+<!-- Room Add / Edit Modal -->
+<div class="overlay" id="roomModalOverlay">
+    <div class="modal">
+        <div class="modal-hd">
+            <h3 id="roomModalTitle">Add Room</h3>
+            <button class="modal-close" onclick="closeRoomModal()">&#215;</button>
+        </div>
+        <input type="hidden" id="roomEditId">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+            <div class="fg">
+                <label for="inputRoomNumber">Room Number</label>
+                <input type="text" id="inputRoomNumber" placeholder="e.g. 101">
+            </div>
+            <div class="fg">
+                <label for="inputRoomType">Type</label>
+                <select id="inputRoomType" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;">
+                    <option value="Single">Single</option>
+                    <option value="Double">Double</option>
+                    <option value="Suite">Suite</option>
+                    <option value="Deluxe">Deluxe</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label for="inputRoomPrice">Price / Night ($)</label>
+                <input type="number" id="inputRoomPrice" placeholder="e.g. 120" min="0" step="0.01">
+            </div>
+            <div class="fg">
+                <label for="inputRoomCapacity">Capacity (guests)</label>
+                <input type="number" id="inputRoomCapacity" placeholder="e.g. 2" min="1">
+            </div>
+        </div>
+        <div class="fg">
+            <label for="inputRoomStatus">Status</label>
+            <select id="inputRoomStatus" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;">
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="maintenance">Maintenance</option>
+            </select>
+        </div>
+        <div class="fg">
+            <label for="inputRoomDesc">Description (optional)</label>
+            <input type="text" id="inputRoomDesc" placeholder="e.g. Ocean view, king bed">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeRoomModal()">Cancel</button>
+            <button class="btn-save" id="btnDeleteRoom" onclick="deleteRoomFromModal()" style="background:var(--danger);display:none;">Delete</button>
+            <button class="btn-save"   onclick="saveRoom()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
     const CTX = '${pageContext.request.contextPath}';
+    const USER_ROLE = '<%= role %>'.toLowerCase();
 
     // Date in topbar
     (function(){
@@ -450,7 +540,7 @@
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management' };
 
     function showPage(name) {
         // Hide all page views
@@ -466,8 +556,9 @@
         });
         // Scroll main wrap to top
         document.querySelector('.main-wrap').scrollTop = 0;
-        // Load data when switching to receptionists
+        // Load data when switching to receptionists / rooms
         if (name === 'receptionists') loadReceptionists();
+        if (name === 'rooms') loadRooms();
     }
 
     function showToast(msg) {
@@ -595,9 +686,151 @@
     $(document).ready(function() {
         showToast('Welcome back, <%= displayName %>!');
         <% if ("admin".equalsIgnoreCase(role)) { %>
-        loadReceptionists(); // pre-fetch for the stat card count
+        loadReceptionists(); // pre-fetch for the receptionist stat card
+        loadRoomsCount();    // pre-fetch for the available rooms stat card
         <% } %>
     });
+
+    /* ---- Room management ---- */
+    function loadRoomsCount() {
+        $.getJSON(CTX + '/api/room', function(list) {
+            const available = list ? list.filter(r => r.status === 'available').length : 0;
+            $('#statRooms').text(available);
+        });
+    }
+
+    function loadRooms() {
+        $.getJSON(CTX + '/api/room', function(list) {
+            const tbody = $('#roomBody');
+            tbody.empty();
+            const available = list ? list.filter(r => r.status === 'available').length : 0;
+            $('#statRooms').text(available);
+            if (!list || list.length === 0) {
+                tbody.append('<tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">No rooms found.</td></tr>');
+                return;
+            }
+            $.each(list, function(i, r) {
+                const statusColors = { available:'chip-active', occupied:'#fef3c7;color:#92400e', maintenance:'#fee2e2;color:#b91c1c' };
+                let badgeStyle = '';
+                let badgeClass = '';
+                if (r.status === 'available')   { badgeClass = 'chip chip-active'; }
+                else if (r.status === 'occupied')    { badgeStyle = 'background:#fef3c7;color:#92400e;'; }
+                else                                 { badgeStyle = 'background:#fee2e2;color:#b91c1c;'; }
+                const badge = badgeClass
+                    ? '<span class="chip ' + badgeClass + '">' + escHtml(r.status) + '</span>'
+                    : '<span class="chip" style="' + badgeStyle + '">' + escHtml(r.status) + '</span>';
+                const actions = USER_ROLE === 'admin'
+                    ? '<button class="btn-manage" onclick="openManageRoomModal('+r.id+',\''+escHtml(r.roomNumber)+'\',\''+escHtml(r.type)+'\','+r.pricePerNight+','+r.capacity+',\''+escHtml(r.status)+'\',\''+escHtml(r.description||'')+'\')">Manage</button>'
+                    : '';
+                tbody.append(
+                    '<tr>'
+                    + '<td style="color:#94a3b8;font-size:12px;">' + (i+1) + '</td>'
+                    + '<td style="font-weight:700;">' + escHtml(r.roomNumber) + '</td>'
+                    + '<td>' + escHtml(r.type) + '</td>'
+                    + '<td>$' + parseFloat(r.pricePerNight).toFixed(2) + '</td>'
+                    + '<td style="text-align:center;">' + r.capacity + '</td>'
+                    + '<td>' + badge + '</td>'
+                    + (USER_ROLE === 'admin' ? '<td>' + actions + '</td>' : '')
+                    + '</tr>'
+                );
+            });
+        }).fail(function() {
+            $('#roomBody').html('<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--danger);">Failed to load rooms.</td></tr>');
+        });
+    }
+
+    function openAddRoomModal() {
+        $('#roomModalTitle').text('Add Room');
+        $('#roomEditId').val('');
+        $('#inputRoomNumber').val('').prop('disabled', false);
+        $('#inputRoomType').val('Single');
+        $('#inputRoomPrice').val('');
+        $('#inputRoomCapacity').val('');
+        $('#inputRoomStatus').val('available');
+        $('#inputRoomDesc').val('');
+        $('#btnDeleteRoom').hide();
+        $('#roomModalOverlay').addClass('open');
+    }
+
+    function openManageRoomModal(id, roomNumber, type, price, capacity, status, desc) {
+        $('#roomModalTitle').text('Manage Room — ' + roomNumber);
+        $('#roomEditId').val(id);
+        $('#inputRoomNumber').val(roomNumber).prop('disabled', false);
+        $('#inputRoomType').val(type);
+        $('#inputRoomPrice').val(price);
+        $('#inputRoomCapacity').val(capacity);
+        $('#inputRoomStatus').val(status);
+        $('#inputRoomDesc').val(desc);
+        $('#btnDeleteRoom').show();
+        $('#roomModalOverlay').addClass('open');
+    }
+
+    function closeRoomModal() { $('#roomModalOverlay').removeClass('open'); }
+
+    function deleteRoomFromModal() {
+        const id = $('#roomEditId').val();
+        if (!id) return;
+        if (!confirm('Delete this room? This cannot be undone.')) return;
+        $.ajax({
+            url: CTX + '/api/room', type: 'DELETE',
+            data: { id },
+            success: function(res) {
+                if (res.success) { showToast(res.message || 'Room deleted.'); closeRoomModal(); loadRooms(); }
+                else showToast(res.message || 'Delete failed.');
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    function saveRoom() {
+        const id          = $('#roomEditId').val();
+        const roomNumber  = $('#inputRoomNumber').val().trim();
+        const type        = $('#inputRoomType').val();
+        const pricePerNight = $('#inputRoomPrice').val();
+        const capacity    = $('#inputRoomCapacity').val();
+        const status      = $('#inputRoomStatus').val();
+        const description = $('#inputRoomDesc').val().trim();
+
+        if (!roomNumber) { showToast('Room number is required.'); return; }
+        if (!type)       { showToast('Room type is required.'); return; }
+
+        if (id) {
+            $.ajax({
+                url: CTX + '/api/room', type: 'PUT',
+                data: { id, roomNumber, type, pricePerNight, capacity, status, description },
+                success: function(res) {
+                    if (res.success) { showToast(res.message || 'Room updated.'); closeRoomModal(); loadRooms(); }
+                    else showToast(res.message || 'Update failed.');
+                },
+                error: function() { showToast('Server error.'); }
+            });
+        } else {
+            $.ajax({
+                url: CTX + '/api/room', type: 'POST',
+                data: { roomNumber, type, pricePerNight, capacity, status, description },
+                success: function(res) {
+                    if (res.success) { showToast(res.message || 'Room added.'); closeRoomModal(); loadRooms(); }
+                    else showToast(res.message || 'Could not add room.');
+                },
+                error: function() { showToast('Server error.'); }
+            });
+        }
+    }
+
+    /* ---- Manage dropdown toggle (removed) ---- */
+
+    function deleteRoom(id) {
+        if (!confirm('Delete this room? This cannot be undone.')) return;
+        $.ajax({
+            url: CTX + '/api/room', type: 'DELETE',
+            data: { id },
+            success: function(res) {
+                if (res.success) { showToast(res.message || 'Room deleted.'); loadRooms(); }
+                else showToast(res.message || 'Delete failed.');
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
 </script>
 </body>
 </html>

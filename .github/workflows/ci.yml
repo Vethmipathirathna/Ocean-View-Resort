@@ -2,21 +2,14 @@ name: Build
 
 on:
   push:
-<<<<<<< HEAD
-    branches: [ "main","develop" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main","develop" ]
-=======
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
->>>>>>> origin/main
+    branches: [ "main", "develop" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-<<<<<<< HEAD
     services:
       mysql:
         image: mysql:8.0
@@ -31,8 +24,6 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
-=======
->>>>>>> origin/main
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +35,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-<<<<<<< HEAD
       - name: Make mvnw executable
         run: chmod +x mvnw
 
@@ -62,10 +52,6 @@ jobs:
           name: test-results
           path: target/surefire-reports/
           retention-days: 7
-=======
-      - name: Build WAR (skip tests)
-        run: ./mvnw clean package -DskipTests
->>>>>>> origin/main
 
       - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
