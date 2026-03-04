@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ "main", "master", "develop" ]
+    branches: [ "main","develop" ]
   pull_request:
-    branches: [ "main", "master", "develop" ]
+    branches: [ "main","develop" ]
 
 jobs:
   build:
@@ -34,6 +34,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
 
       - name: Build and test
         env:
