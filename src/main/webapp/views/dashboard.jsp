@@ -585,10 +585,13 @@
                         <th>Total</th>
                         <th>Status</th>
                         <th>Created</th>
+                        <% if ("admin".equalsIgnoreCase(role)) { %>
+                        <th>Actions</th>
+                        <% } %>
                     </tr>
                 </thead>
                 <tbody id="reservationBody">
-                    <tr><td colspan="9" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
+                    <tr><td colspan="10" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
                 </tbody>
             </table>
         </div>
@@ -772,11 +775,11 @@
             </div>
             <div class="fg">
                 <label>Check-In Date</label>
-                <input type="date" id="inputResCheckIn" onchange="calcTotalPrice()">
+                <input type="date" id="inputResCheckIn" onchange="refreshNewResRooms()">
             </div>
             <div class="fg">
                 <label>Check-Out Date</label>
-                <input type="date" id="inputResCheckOut" onchange="calcTotalPrice()">
+                <input type="date" id="inputResCheckOut" onchange="refreshNewResRooms()">
             </div>
             <div class="fg">
                 <label>Total Price ($)</label>
@@ -790,6 +793,60 @@
         <div class="modal-foot">
             <button class="btn-cancel" onclick="closeReservationModal()">Cancel</button>
             <button class="btn-save" onclick="saveReservation()">Create Reservation</button>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Reservation Modal -->
+<div class="overlay" id="manageResModalOverlay">
+    <div class="modal" style="width:500px;">
+        <div class="modal-hd">
+            <h3 id="manageResTitle">Manage Reservation</h3>
+            <button class="modal-close" onclick="closeManageResModal()">&#215;</button>
+        </div>
+        <input type="hidden" id="manageResId">
+        <!-- Read-only info -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+            <div class="fg">
+                <label>Guest</label>
+                <input type="text" id="manageResGuest" disabled style="background:#f8fafc;font-weight:600;">
+            </div>
+            <div class="fg">
+                <label>Room</label>
+                <select id="manageResRoom" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;" onchange="recalcManageTotalPrice()">
+                </select>
+            </div>
+            <div class="fg">
+                <label>Check-In Date</label>
+                <input type="date" id="manageResCheckIn" onchange="refreshManageResRooms()">
+            </div>
+            <div class="fg">
+                <label>Check-Out Date</label>
+                <input type="date" id="manageResCheckOut" onchange="refreshManageResRooms()">
+            </div>
+            <div class="fg">
+                <label>Total Price ($)</label>
+                <input type="number" id="manageResTotalPrice" min="0" step="0.01">
+            </div>
+            <div class="fg">
+                <label>Status</label>
+                <select id="manageResStatus" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;">
+                    <option value="confirmed">Confirmed</option>
+                    <option value="checked_in">Checked In</option>
+                    <option value="checked_out">Checked Out</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+        </div>
+        <div class="fg">
+            <label>Notes</label>
+            <input type="text" id="manageResNotes" placeholder="Optional notes">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeManageResModal()">Cancel</button>
+            <button class="btn-save" onclick="deleteReservationFromModal()" style="background:var(--danger);">Delete</button>
+            <button class="btn-save" onclick="saveReservationChanges()">Save Changes</button>
         </div>
     </div>
 </div>
@@ -1303,6 +1360,10 @@
             if (checkIn && checkOut) {
                 nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
             }
+            // Manage button (admin only)
+            const manageBtn = USER_ROLE === 'admin'
+                ? '<button class="btn-manage" onclick="openManageResModal(' + r.id + ')">Manage</button>'
+                : '';
             tbody.append(
                 '<tr style="' + rowStyle + '">'
                 + '<td style="color:#94a3b8;font-size:12px;">' + (i+1) + '</td>'
@@ -1314,6 +1375,7 @@
                 + '<td style="font-weight:600;">$' + parseFloat(r.totalPrice || 0).toFixed(2) + '</td>'
                 + '<td>' + badge + '</td>'
                 + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
+                + (USER_ROLE === 'admin' ? '<td>' + manageBtn + '</td>' : '')
                 + '</tr>'
             );
         });
@@ -1326,17 +1388,6 @@
         $.getJSON(CTX + '/api/guest', function(guests) {
             _resGuestList = guests || [];
         });
-        // Populate available room dropdown
-        $.getJSON(CTX + '/api/room', function(rooms) {
-            const $sel = $('#inputResRoom').empty().append('<option value="" data-price="0">-- Select Room --</option>');
-            $.each(rooms || [], function(i, r) {
-                if (r.status === 'available') {
-                    $sel.append('<option value="' + r.id + '" data-price="' + r.pricePerNight + '">' +
-                        'Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') — $' + parseFloat(r.pricePerNight).toFixed(2) + '/night' +
-                        '</option>');
-                }
-            });
-        });
         // Set default dates (today and tomorrow)
         const today = new Date();
         const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
@@ -1344,7 +1395,7 @@
         $('#inputResCheckOut').val(tomorrow.toISOString().split('T')[0]);
         $('#inputResTotalPrice').val('');
         $('#inputResNotes').val('');
-        calcTotalPrice();
+        refreshNewResRooms(); // loads rooms filtered by selected dates, then recalcs price
         $('#reservationModalOverlay').addClass('open');
         setTimeout(function(){ $('#inputGuestSearch').focus(); }, 150);
     }
@@ -1427,6 +1478,42 @@
         }
     }
 
+    // Re-fetches the room dropdown for the New Reservation modal based on selected dates.
+    function refreshNewResRooms() {
+        const checkIn  = $('#inputResCheckIn').val();
+        const checkOut = $('#inputResCheckOut').val();
+        const currentRoomId = parseInt($('#inputResRoom').val()) || 0;
+        if (!checkIn || !checkOut) {
+            // No dates yet — load all available rooms without date filter
+            $.getJSON(CTX + '/api/room', function(rooms) {
+                const $sel = $('#inputResRoom').empty()
+                    .append('<option value="" data-price="0">-- Select Room --</option>');
+                $.each(rooms || [], function(i, r) {
+                    if (r.status !== 'available') return;
+                    const $opt = $('<option>').val(r.id)
+                        .text('Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') \u2014 $' + parseFloat(r.pricePerNight).toFixed(2) + '/night')
+                        .attr('data-price', r.pricePerNight);
+                    if (r.id === currentRoomId) $opt.prop('selected', true);
+                    $sel.append($opt);
+                });
+                calcTotalPrice();
+            });
+            return;
+        }
+        $.getJSON(CTX + '/api/room?checkIn=' + checkIn + '&checkOut=' + checkOut + '&excludeRes=-1', function(rooms) {
+            const $sel = $('#inputResRoom').empty()
+                .append('<option value="" data-price="0">-- Select Room --</option>');
+            $.each(rooms || [], function(i, r) {
+                const $opt = $('<option>').val(r.id)
+                    .text('Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') \u2014 $' + parseFloat(r.pricePerNight).toFixed(2) + '/night')
+                    .attr('data-price', r.pricePerNight);
+                if (r.id === currentRoomId) $opt.prop('selected', true);
+                $sel.append($opt);
+            });
+            calcTotalPrice();
+        });
+    }
+
     function saveReservation() {
         const guestId    = $('#inputResGuestId').val();
         const roomId     = $('#inputResRoom').val();
@@ -1450,6 +1537,108 @@
                     loadReservations();
                 } else {
                     showToast(res.message || 'Failed to create reservation.');
+                }
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    /* ---- Manage (edit/delete) reservation ---- */
+    let _manageResCurrentId     = 0;
+    let _manageResCurrentRoomId = 0;
+
+    function openManageResModal(id) {
+        const r = _allReservations.find(function(x){ return x.id === id; });
+        if (!r) { showToast('Reservation not found.'); return; }
+        _manageResCurrentId     = r.id;
+        _manageResCurrentRoomId = r.roomId;
+        $('#manageResId').val(r.id);
+        $('#manageResGuest').val(r.guestName || '');
+        $('#manageResCheckIn').val(r.checkInDate || '');
+        $('#manageResCheckOut').val(r.checkOutDate || '');
+        $('#manageResTotalPrice').val(r.totalPrice || '');
+        $('#manageResStatus').val(r.status || 'confirmed');
+        $('#manageResNotes').val(r.notes || '');
+        $('#manageResTitle').text('Manage Reservation \u2014 ' + (r.guestName || '') + ' / Room ' + (r.roomNumber || ''));
+        refreshManageResRooms(); // loads rooms available for the reservation's dates
+        $('#manageResModalOverlay').addClass('open');
+    }
+
+    // Re-fetches the room dropdown for the Manage modal based on current date inputs.
+    function refreshManageResRooms() {
+        const checkIn  = $('#manageResCheckIn').val();
+        const checkOut = $('#manageResCheckOut').val();
+        if (!checkIn || !checkOut) return;
+        const prevRoomId = parseInt($('#manageResRoom').val()) || _manageResCurrentRoomId;
+        $.getJSON(CTX + '/api/room?checkIn=' + checkIn + '&checkOut=' + checkOut + '&excludeRes=' + _manageResCurrentId, function(rooms) {
+            const $sel = $('#manageResRoom').empty();
+            $.each(rooms || [], function(i, rm) {
+                const isCurrent = rm.id === _manageResCurrentRoomId;
+                const label = 'Room ' + escHtml(rm.roomNumber) + ' (' + escHtml(rm.type) + ')'
+                    + ' \u2014 $' + parseFloat(rm.pricePerNight).toFixed(2) + '/night'
+                    + (isCurrent ? ' [current]' : '');
+                const $opt = $('<option>').val(rm.id).text(label).attr('data-price', rm.pricePerNight);
+                if (rm.id === prevRoomId) $opt.prop('selected', true);
+                $sel.append($opt);
+            });
+            recalcManageTotalPrice();
+        });
+    }
+
+    function recalcManageTotalPrice() {
+        const price = parseFloat($('#manageResRoom option:selected').data('price')) || 0;
+        const checkIn  = $('#manageResCheckIn').val();
+        const checkOut = $('#manageResCheckOut').val();
+        if (price > 0 && checkIn && checkOut) {
+            const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+            $('#manageResTotalPrice').val((price * nights).toFixed(2));
+        }
+    }
+
+    function closeManageResModal() { $('#manageResModalOverlay').removeClass('open'); }
+
+    function saveReservationChanges() {
+        const id         = $('#manageResId').val();
+        const roomId     = $('#manageResRoom').val();
+        const checkIn    = $('#manageResCheckIn').val();
+        const checkOut   = $('#manageResCheckOut').val();
+        const totalPrice = $('#manageResTotalPrice').val();
+        const status     = $('#manageResStatus').val();
+        const notes      = $('#manageResNotes').val().trim();
+        if (!roomId)   { showToast('Please select a room.');        return; }
+        if (!checkIn)  { showToast('Check-in date is required.');   return; }
+        if (!checkOut) { showToast('Check-out date is required.');  return; }
+        if (new Date(checkOut) <= new Date(checkIn)) { showToast('Check-out must be after check-in.'); return; }
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'PUT',
+            data: { id, roomId, checkInDate: checkIn, checkOutDate: checkOut, totalPrice, status, notes },
+            success: function(res) {
+                if (res.success) {
+                    showToast(res.message || 'Reservation updated.');
+                    closeManageResModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Update failed.');
+                }
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    function deleteReservationFromModal() {
+        const id = $('#manageResId').val();
+        if (!id) return;
+        if (!confirm('Delete this reservation? This cannot be undone.')) return;
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'DELETE',
+            data: { id },
+            success: function(res) {
+                if (res.success) {
+                    showToast(res.message || 'Reservation deleted.');
+                    closeManageResModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Delete failed.');
                 }
             },
             error: function() { showToast('Server error.'); }

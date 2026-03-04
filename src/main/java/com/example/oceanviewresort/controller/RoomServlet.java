@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,19 @@ public class RoomServlet extends HttpServlet {
             return;
         }
 
-        List<Room> rooms = roomDAO.findAll();
+        List<Room> rooms;
+        String checkInStr  = req.getParameter("checkIn");
+        String checkOutStr = req.getParameter("checkOut");
+        String excludeStr  = req.getParameter("excludeRes");
+
+        if (checkInStr != null && !checkInStr.isEmpty() && checkOutStr != null && !checkOutStr.isEmpty()) {
+            int excludeId = (excludeStr != null && !excludeStr.isEmpty()) ? Integer.parseInt(excludeStr) : -1;
+            rooms = roomDAO.findAvailableForDates(
+                    LocalDate.parse(checkInStr), LocalDate.parse(checkOutStr), excludeId);
+        } else {
+            rooms = roomDAO.findAll();
+        }
+
         JsonArray arr = new JsonArray();
         for (Room r : rooms) {
             JsonObject o = new JsonObject();
