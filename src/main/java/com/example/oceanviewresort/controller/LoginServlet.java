@@ -5,34 +5,31 @@ import com.example.oceanviewresort.service.AuthService;
 import com.google.gson.JsonObject;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Optional;
 
 /**
- * REST-style LoginServlet.
- *
- * POST /api/login
- *  Body (form params): username, password
- *  Response (JSON):
- *    { "success": true,  "message": "...", "role": "ADMIN", "redirect": "/views/dashboard.jsp" }
- *    { "success": false, "message": "..." }
+ * POST /api/login  - authenticates user and returns JSON with redirect URL.
+ * Admin   -> /views/dashboard.jsp
+ * Receptionist -> /views/receptionist-dashboard.jsp
  */
 @WebServlet(name = "LoginServlet", urlPatterns = "/api/login")
 public class LoginServlet extends HttpServlet {
 
     private final AuthService authService = new AuthService();
 
-    /** GET — redirect to login page */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         resp.sendRedirect(req.getContextPath() + "/views/login.jsp");
     }
 
-    /** POST — authenticate and return JSON */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -44,24 +41,30 @@ public class LoginServlet extends HttpServlet {
         String password = req.getParameter("password");
 
         JsonObject json = new JsonObject();
-
         Optional<User> result = authService.authenticate(username, password);
 
         if (result.isPresent()) {
             User user = result.get();
 
-            // Store user info in session
             HttpSession session = req.getSession(true);
             session.setAttribute("loggedInUser", user);
             session.setAttribute("username",     user.getUsername());
             session.setAttribute("fullName",     user.getFullName());
             session.setAttribute("role",         user.getRole());
-            session.setMaxInactiveInterval(30 * 60); // 30 minutes
+            session.setMaxInactiveInterval(30 * 60);
+
+            // Choose redirect page based on role
+            String redirectPage;
+            if ("receptionist".equalsIgnoreCase(user.getRole())) {
+                redirectPage = req.getContextPath() + "/views/receptionist-dashboard.jsp";
+            } else {
+                redirectPage = req.getContextPath() + "/views/dashboard.jsp";
+            }
 
             json.addProperty("success",  true);
             json.addProperty("message",  "Login successful. Welcome, " + user.getFullName() + "!");
             json.addProperty("role",     user.getRole());
-            json.addProperty("redirect", req.getContextPath() + "/views/dashboard.jsp");
+            json.addProperty("redirect", redirectPage);
 
         } else {
             resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
