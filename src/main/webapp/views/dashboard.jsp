@@ -299,6 +299,9 @@
         <a class="nav-item" data-page="receptionists" href="#" onclick="showPage('receptionists');return false;">
             <span class="ni">&#128101;</span> Receptionists
         </a>
+        <a class="nav-item" data-page="guests" href="#" onclick="showPage('guests');return false;">
+            <span class="ni">&#128100;</span> Guests
+        </a>
         <% } %>
 
         <div class="nav-section-label" style="margin-top:12px;">Operations</div>
@@ -361,11 +364,11 @@
                     <div class="s-sub">Coming soon</div>
                 </div>
             </div>
-            <div class="stat">
-                <div class="stat-icon si-purple">&#128101;</div>
+            <div class="stat" style="cursor:pointer" onclick="showPage('guests')">
+                <div class="stat-icon si-purple">&#128106;</div>
                 <div class="stat-info">
-                    <div class="s-label">Receptionists</div>
-                    <div class="s-value" id="statReceptionists"></div>
+                    <div class="s-label">Registered Guests</div>
+                    <div class="s-value" id="statGuests">0</div>
                     <div class="s-sub">Total registered</div>
                 </div>
             </div>
@@ -439,6 +442,34 @@
             </table>
         </div>
     </div><!-- /#page-rooms -->
+
+    <!-- ===== VIEW: GUESTS ===== -->
+    <% if ("admin".equalsIgnoreCase(role)) { %>
+    <div id="page-guests" style="display:none;">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Registered Guests</h2>
+                <button class="btn-add-new" onclick="openAddGuestModal()">&#43; Register Guest</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>ID Type</th>
+                        <th>ID Number</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="guestBody">
+                    <tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /#page-guests -->
+    <% } %>
 
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
@@ -525,6 +556,57 @@
     </div>
 </div>
 
+<!-- Guest Register / Manage Modal -->
+<div class="overlay" id="guestModalOverlay">
+    <div class="modal">
+        <div class="modal-hd">
+            <h3 id="guestModalTitle">Register Guest</h3>
+            <button class="modal-close" onclick="closeGuestModal()">&#215;</button>
+        </div>
+        <input type="hidden" id="guestEditId">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+            <div class="fg">
+                <label>First Name</label>
+                <input type="text" id="inputGuestFirst" placeholder="e.g. John">
+            </div>
+            <div class="fg">
+                <label>Last Name</label>
+                <input type="text" id="inputGuestLast" placeholder="e.g. Smith">
+            </div>
+            <div class="fg">
+                <label>Email</label>
+                <input type="email" id="inputGuestEmail" placeholder="e.g. john@email.com">
+            </div>
+            <div class="fg">
+                <label>Phone</label>
+                <input type="text" id="inputGuestPhone" placeholder="e.g. +94 77 123 4567">
+            </div>
+            <div class="fg">
+                <label>ID Type</label>
+                <select id="inputGuestIdType" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;">
+                    <option value="Passport">Passport</option>
+                    <option value="NIC">NIC</option>
+                    <option value="Driver's License">Driver&#39;s License</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>ID Number</label>
+                <input type="text" id="inputGuestIdNumber" placeholder="e.g. N1234567">
+            </div>
+        </div>
+        <div class="fg">
+            <label>Address</label>
+            <input type="text" id="inputGuestAddress" placeholder="e.g. 12 Main St, Colombo">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeGuestModal()">Cancel</button>
+            <button class="btn-save" id="btnDeleteGuest" onclick="deleteGuestFromModal()" style="background:var(--danger);display:none;">Delete</button>
+            <button class="btn-save" onclick="saveGuest()" id="btnSaveGuest">Register</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -540,7 +622,7 @@
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management' };
 
     function showPage(name) {
         // Hide all page views
@@ -559,6 +641,7 @@
         // Load data when switching to receptionists / rooms
         if (name === 'receptionists') loadReceptionists();
         if (name === 'rooms') loadRooms();
+        if (name === 'guests') loadGuests();
     }
 
     function showToast(msg) {
@@ -686,8 +769,9 @@
     $(document).ready(function() {
         showToast('Welcome back, <%= displayName %>!');
         <% if ("admin".equalsIgnoreCase(role)) { %>
-        loadReceptionists(); // pre-fetch for the receptionist stat card
-        loadRoomsCount();    // pre-fetch for the available rooms stat card
+        loadReceptionists();
+        loadRoomsCount();
+        loadGuestsCount();
         <% } %>
     });
 
@@ -818,6 +902,120 @@
     }
 
     /* ---- Manage dropdown toggle (removed) ---- */
+
+    /* ---- Guest management ---- */
+    function loadGuestsCount() {
+        $.getJSON(CTX + '/api/guest', function(list) {
+            $('#statGuests').text(list ? list.length : 0);
+        });
+    }
+
+    function loadGuests() {
+        $.getJSON(CTX + '/api/guest', function(list) {
+            const tbody = $('#guestBody');
+            tbody.empty();
+            $('#statGuests').text(list ? list.length : 0);
+            if (!list || list.length === 0) {
+                tbody.append('<tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">No guests registered yet.</td></tr>');
+                return;
+            }
+            $.each(list, function(i, g) {
+                tbody.append(
+                    '<tr>'
+                    + '<td style="color:#94a3b8;font-size:12px;">' + (i+1) + '</td>'
+                    + '<td style="font-weight:600;">' + escHtml(g.fullName) + '</td>'
+                    + '<td style="color:#475569;">' + escHtml(g.email || '') + '</td>'
+                    + '<td style="color:#475569;">' + escHtml(g.phone || '') + '</td>'
+                    + '<td>' + escHtml(g.idType || '') + '</td>'
+                    + '<td style="color:#475569;">' + escHtml(g.idNumber || '') + '</td>'
+                    + '<td><button class="btn-manage" onclick="openManageGuestModal('+g.id+',\''+escHtml(g.firstName)+'\',\''+escHtml(g.lastName)+'\',\''+escHtml(g.email||'')+'\',\''+escHtml(g.phone||'')+'\',\''+escHtml(g.address||'')+'\',\''+escHtml(g.idType||'')+'\',\''+escHtml(g.idNumber||'')+'\')">Manage</button></td>'
+                    + '</tr>'
+                );
+            });
+        }).fail(function() {
+            $('#guestBody').html('<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--danger);">Failed to load guests.</td></tr>');
+        });
+    }
+
+    function openAddGuestModal() {
+        $('#guestModalTitle').text('Register Guest');
+        $('#guestEditId').val('');
+        $('#inputGuestFirst').val('');
+        $('#inputGuestLast').val('');
+        $('#inputGuestEmail').val('');
+        $('#inputGuestPhone').val('');
+        $('#inputGuestAddress').val('');
+        $('#inputGuestIdType').val('Passport');
+        $('#inputGuestIdNumber').val('');
+        $('#btnDeleteGuest').hide();
+        $('#btnSaveGuest').text('Register');
+        $('#guestModalOverlay').addClass('open');
+    }
+
+    function openManageGuestModal(id, firstName, lastName, email, phone, address, idType, idNumber) {
+        $('#guestModalTitle').text('Manage Guest');
+        $('#guestEditId').val(id);
+        $('#inputGuestFirst').val(firstName);
+        $('#inputGuestLast').val(lastName);
+        $('#inputGuestEmail').val(email);
+        $('#inputGuestPhone').val(phone);
+        $('#inputGuestAddress').val(address);
+        $('#inputGuestIdType').val(idType);
+        $('#inputGuestIdNumber').val(idNumber);
+        $('#btnDeleteGuest').show();
+        $('#btnSaveGuest').text('Save Changes');
+        $('#guestModalOverlay').addClass('open');
+    }
+
+    function closeGuestModal() { $('#guestModalOverlay').removeClass('open'); }
+
+    function saveGuest() {
+        const id        = $('#guestEditId').val();
+        const firstName = $('#inputGuestFirst').val().trim();
+        const lastName  = $('#inputGuestLast').val().trim();
+        const email     = $('#inputGuestEmail').val().trim();
+        const phone     = $('#inputGuestPhone').val().trim();
+        const address   = $('#inputGuestAddress').val().trim();
+        const idType    = $('#inputGuestIdType').val();
+        const idNumber  = $('#inputGuestIdNumber').val().trim();
+        if (!firstName || !lastName) { showToast('First and last name are required.'); return; }
+        if (id) {
+            $.ajax({
+                url: CTX + '/api/guest', type: 'PUT',
+                data: { id, firstName, lastName, email, phone, address, idType, idNumber },
+                success: function(res) {
+                    if (res.success) { showToast(res.message || 'Guest updated.'); closeGuestModal(); loadGuests(); }
+                    else showToast(res.message || 'Update failed.');
+                },
+                error: function() { showToast('Server error.'); }
+            });
+        } else {
+            $.ajax({
+                url: CTX + '/api/guest', type: 'POST',
+                data: { firstName, lastName, email, phone, address, idType, idNumber },
+                success: function(res) {
+                    if (res.success) { showToast(res.message || 'Guest registered.'); closeGuestModal(); loadGuests(); }
+                    else showToast(res.message || 'Failed to register guest.');
+                },
+                error: function() { showToast('Server error.'); }
+            });
+        }
+    }
+
+    function deleteGuestFromModal() {
+        const id = $('#guestEditId').val();
+        if (!id) return;
+        if (!confirm('Delete this guest? This cannot be undone.')) return;
+        $.ajax({
+            url: CTX + '/api/guest', type: 'DELETE',
+            data: { id },
+            success: function(res) {
+                if (res.success) { showToast(res.message || 'Guest deleted.'); closeGuestModal(); loadGuests(); }
+                else showToast(res.message || 'Delete failed.');
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
 
     function deleteRoom(id) {
         if (!confirm('Delete this room? This cannot be undone.')) return;
