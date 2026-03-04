@@ -17,6 +17,11 @@ public class AuthService {
         this.userDAO = new UserDAO();
     }
 
+    /** Package-private constructor for unit testing — allows injecting a mock UserDAO. */
+    AuthService(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
+
     /**
      * Validates the supplied plain-text password against the stored BCrypt hash.
      *
