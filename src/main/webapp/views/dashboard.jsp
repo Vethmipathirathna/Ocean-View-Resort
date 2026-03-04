@@ -305,7 +305,7 @@
         <% } %>
 
         <div class="nav-section-label" style="margin-top:12px;">Operations</div>
-        <a class="nav-item" href="#"><span class="ni">&#128716;</span> Bookings</a>
+        <a class="nav-item" data-page="reservations" href="#" onclick="showPage('reservations');return false;"><span class="ni">&#128716;</span> Bookings</a>
         <a class="nav-item" data-page="rooms" href="#" onclick="showPage('rooms');return false;"><span class="ni">&#127968;</span> Rooms</a>
         <a class="nav-item" href="#"><span class="ni">&#128203;</span> Reports</a>
         <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
@@ -340,12 +340,12 @@
 
         <!-- Stat Cards -->
         <div class="stats-row">
-            <div class="stat">
+            <div class="stat" style="cursor:pointer" onclick="showPage('reservations')">
                 <div class="stat-icon si-blue">&#128716;</div>
                 <div class="stat-info">
                     <div class="s-label">Total Reservations</div>
-                    <div class="s-value"></div>
-                    <div class="s-sub">Coming soon</div>
+                    <div class="s-value" id="statReservations">0</div>
+                    <div class="s-sub">All bookings</div>
                 </div>
             </div>
             <div class="stat" style="cursor:pointer" onclick="showPage('rooms')">
@@ -377,7 +377,7 @@
         <!-- Quick Actions -->
         <div class="section-hd">Quick Actions</div>
         <div class="actions-row">
-            <button class="act-btn"><span class="ai">&#128716;</span> New Booking</button>
+            <button class="act-btn" onclick="showPage('reservations')"><span class="ai">&#128716;</span> New Booking</button>
             <button class="act-btn"><span class="ai">&#128100;</span> Guest Check-In</button>
             <button class="act-btn"><span class="ai">&#127968;</span> Room Status</button>
             <button class="act-btn"><span class="ai">&#128203;</span> Reports</button>
@@ -470,6 +470,35 @@
         </div>
     </div><!-- /#page-guests -->
     <% } %>
+
+    <!-- ===== VIEW: RESERVATIONS ===== -->
+    <div id="page-reservations" style="display:none;">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>All Reservations</h2>
+                <% if ("admin".equalsIgnoreCase(role)) { %>
+                <button class="btn-add-new" onclick="openNewReservationModal()">&#43; New Reservation</button>
+                <% } %>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Guest</th>
+                        <th>Room</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody id="reservationBody">
+                    <tr><td colspan="8" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /#page-reservations -->
 
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
@@ -607,6 +636,57 @@
     </div>
 </div>
 
+<!-- New Reservation Modal -->
+<div class="overlay" id="reservationModalOverlay">
+    <div class="modal" style="width:520px;">
+        <div class="modal-hd">
+            <h3 id="reservationModalTitle">New Reservation</h3>
+            <button class="modal-close" onclick="closeReservationModal()">&#215;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+            <div class="fg" style="grid-column:1/-1;">
+                <label>Guest</label>
+                <select id="inputResGuest" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;">
+                    <option value="">-- Select Guest --</option>
+                </select>
+            </div>
+            <div class="fg" style="grid-column:1/-1;">
+                <label>Room</label>
+                <select id="inputResRoom" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;" onchange="calcTotalPrice()">
+                    <option value="" data-price="0">-- Select Room --</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>Check-In Date</label>
+                <input type="date" id="inputResCheckIn" onchange="calcTotalPrice()">
+            </div>
+            <div class="fg">
+                <label>Check-Out Date</label>
+                <input type="date" id="inputResCheckOut" onchange="calcTotalPrice()">
+            </div>
+            <div class="fg">
+                <label>Total Price ($)</label>
+                <input type="number" id="inputResTotalPrice" placeholder="Auto-calculated" min="0" step="0.01">
+            </div>
+            <div class="fg">
+                <label>Status</label>
+                <select id="inputResStatus" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;">
+                    <option value="confirmed">Confirmed</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+        </div>
+        <div class="fg">
+            <label>Notes (optional)</label>
+            <input type="text" id="inputResNotes" placeholder="e.g. Late arrival, extra bed requested">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeReservationModal()">Cancel</button>
+            <button class="btn-save" onclick="saveReservation()">Create Reservation</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -622,7 +702,7 @@
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management' };
 
     function showPage(name) {
         // Hide all page views
@@ -642,6 +722,7 @@
         if (name === 'receptionists') loadReceptionists();
         if (name === 'rooms') loadRooms();
         if (name === 'guests') loadGuests();
+        if (name === 'reservations') loadReservations();
     }
 
     function showToast(msg) {
@@ -772,6 +853,7 @@
         loadReceptionists();
         loadRoomsCount();
         loadGuestsCount();
+        loadReservationsCount();
         <% } %>
     });
 
@@ -1012,6 +1094,126 @@
             success: function(res) {
                 if (res.success) { showToast(res.message || 'Guest deleted.'); closeGuestModal(); loadGuests(); }
                 else showToast(res.message || 'Delete failed.');
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    /* ---- Reservation management ---- */
+    function loadReservationsCount() {
+        $.getJSON(CTX + '/api/reservation', function(list) {
+            $('#statReservations').text(list ? list.length : 0);
+        });
+    }
+
+    function loadReservations() {
+        $.getJSON(CTX + '/api/reservation', function(list) {
+            const tbody = $('#reservationBody');
+            tbody.empty();
+            $('#statReservations').text(list ? list.length : 0);
+            if (!list || list.length === 0) {
+                tbody.append('<tr><td colspan="8" style="text-align:center;padding:28px;color:#94a3b8;">No reservations found.</td></tr>');
+                return;
+            }
+            const statusStyles = {
+                confirmed:    'background:#dcfce7;color:#15803d;',
+                pending:      'background:#fef3c7;color:#92400e;',
+                cancelled:    'background:#fee2e2;color:#b91c1c;',
+                checked_in:   'background:#dbeafe;color:#1e40af;',
+                checked_out:  'background:#f3e8ff;color:#6b21a8;'
+            };
+            $.each(list, function(i, r) {
+                const style = statusStyles[r.status] || 'background:#f1f5f9;color:#475569;';
+                const badge = '<span class="chip" style="' + style + '">' + escHtml(r.status) + '</span>';
+                const checkIn  = r.checkInDate  ? r.checkInDate  : '';
+                const checkOut = r.checkOutDate ? r.checkOutDate : '';
+                const created  = r.createdAt    ? r.createdAt.substring(0,10) : '';
+                tbody.append(
+                    '<tr>'
+                    + '<td style="color:#94a3b8;font-size:12px;">' + (i+1) + '</td>'
+                    + '<td style="font-weight:600;">' + escHtml(r.guestName) + '</td>'
+                    + '<td style="font-weight:600;">' + escHtml(r.roomNumber) + '</td>'
+                    + '<td style="color:#475569;">' + escHtml(checkIn) + '</td>'
+                    + '<td style="color:#475569;">' + escHtml(checkOut) + '</td>'
+                    + '<td>$' + parseFloat(r.totalPrice).toFixed(2) + '</td>'
+                    + '<td>' + badge + '</td>'
+                    + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
+                    + '</tr>'
+                );
+            });
+        }).fail(function() {
+            $('#reservationBody').html('<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--danger);">Failed to load reservations.</td></tr>');
+        });
+    }
+
+    function openNewReservationModal() {
+        // Populate guest dropdown
+        $.getJSON(CTX + '/api/guest', function(guests) {
+            const $sel = $('#inputResGuest').empty().append('<option value="">-- Select Guest --</option>');
+            $.each(guests || [], function(i, g) {
+                $sel.append('<option value="' + g.id + '">' + escHtml(g.fullName || (g.firstName + ' ' + g.lastName)) + '</option>');
+            });
+        });
+        // Populate available room dropdown
+        $.getJSON(CTX + '/api/room', function(rooms) {
+            const $sel = $('#inputResRoom').empty().append('<option value="" data-price="0">-- Select Room --</option>');
+            $.each(rooms || [], function(i, r) {
+                if (r.status === 'available') {
+                    $sel.append('<option value="' + r.id + '" data-price="' + r.pricePerNight + '">' +
+                        'Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') — $' + parseFloat(r.pricePerNight).toFixed(2) + '/night' +
+                        '</option>');
+                }
+            });
+        });
+        // Set default dates (today and tomorrow)
+        const today = new Date();
+        const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
+        $('#inputResCheckIn').val(today.toISOString().split('T')[0]);
+        $('#inputResCheckOut').val(tomorrow.toISOString().split('T')[0]);
+        $('#inputResTotalPrice').val('');
+        $('#inputResStatus').val('confirmed');
+        $('#inputResNotes').val('');
+        calcTotalPrice();
+        $('#reservationModalOverlay').addClass('open');
+    }
+
+    function closeReservationModal() { $('#reservationModalOverlay').removeClass('open'); }
+
+    function calcTotalPrice() {
+        const $roomOpt = $('#inputResRoom option:selected');
+        const price = parseFloat($roomOpt.data('price')) || 0;
+        const checkIn  = $('#inputResCheckIn').val();
+        const checkOut = $('#inputResCheckOut').val();
+        if (price > 0 && checkIn && checkOut) {
+            const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+            $('#inputResTotalPrice').val((price * nights).toFixed(2));
+        }
+    }
+
+    function saveReservation() {
+        const guestId    = $('#inputResGuest').val();
+        const roomId     = $('#inputResRoom').val();
+        const checkIn    = $('#inputResCheckIn').val();
+        const checkOut   = $('#inputResCheckOut').val();
+        const totalPrice = $('#inputResTotalPrice').val();
+        const status     = $('#inputResStatus').val();
+        const notes      = $('#inputResNotes').val().trim();
+        if (!guestId)  { showToast('Please select a guest.');       return; }
+        if (!roomId)   { showToast('Please select a room.');        return; }
+        if (!checkIn)  { showToast('Check-in date is required.');   return; }
+        if (!checkOut) { showToast('Check-out date is required.');  return; }
+        if (new Date(checkOut) <= new Date(checkIn)) { showToast('Check-out must be after check-in.'); return; }
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'POST',
+            data: { guestId, roomId, checkInDate: checkIn, checkOutDate: checkOut, totalPrice, status, notes },
+            success: function(res) {
+                if (res.success) {
+                    showToast(res.message || 'Reservation created.');
+                    closeReservationModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Failed to create reservation.');
+                }
             },
             error: function() { showToast('Server error.'); }
         });
