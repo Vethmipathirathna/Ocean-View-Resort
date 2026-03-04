@@ -266,6 +266,85 @@
         }
         .btn-manage:hover { background: #e2e8f0; border-color: #94a3b8; }
 
+        /* ===== GUEST SEARCH AUTOCOMPLETE ===== */
+        .guest-search-wrap { position: relative; }
+        .guest-search-wrap input {
+            width: 100%; padding: 9px 13px 9px 36px;
+            border: 1px solid var(--border); border-radius: 9px;
+            font-size: 14px; outline: none; font-family: inherit;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .guest-search-wrap input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+        .guest-search-icon {
+            position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+            font-size: 15px; color: var(--muted); pointer-events: none;
+        }
+        .guest-selected-card {
+            display: none; align-items: center; gap: 12px;
+            padding: 10px 13px; border: 1.5px solid var(--primary);
+            border-radius: 9px; background: #eff6ff;
+        }
+        .guest-selected-card .gsc-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; flex-shrink: 0;
+        }
+        .guest-selected-card .gsc-info .gsc-name { font-size: 14px; font-weight: 700; color: var(--text); }
+        .guest-selected-card .gsc-info .gsc-sub  { font-size: 12px; color: var(--muted); }
+        .gsc-clear {
+            margin-left: auto; background: none; border: none;
+            font-size: 18px; color: var(--muted); cursor: pointer; line-height: 1;
+        }
+        .gsc-clear:hover { color: var(--danger); }
+        .guest-results {
+            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            z-index: 9999; max-height: 220px; overflow-y: auto;
+        }
+        .guest-results.open { display: block; }
+        .guest-result-item {
+            display: flex; align-items: center; gap: 11px;
+            padding: 10px 14px; cursor: pointer; transition: background .1s;
+        }
+        .guest-result-item:hover { background: #f0f9ff; }
+        .guest-result-item .gri-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; flex-shrink: 0;
+        }
+        .guest-result-item .gri-name  { font-size: 13.5px; font-weight: 600; color: var(--text); }
+        .guest-result-item .gri-sub   { font-size: 11.5px; color: var(--muted); }
+        .guest-result-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 13px; }
+
+        /* ===== RESERVATION FILTERS ===== */
+        .res-filters {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            padding: 14px 22px; border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+        .filter-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 12.5px; font-weight: 600; cursor: pointer;
+            border: 1.5px solid var(--border); background: var(--card); color: var(--muted);
+            transition: all .15s;
+        }
+        .filter-pill:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+        .filter-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .filter-pill .fp-count {
+            background: rgba(255,255,255,0.3); color: inherit;
+            padding: 1px 7px; border-radius: 10px; font-size: 11px;
+        }
+        .filter-pill:not(.active) .fp-count { background: #e2e8f0; color: var(--muted); }
+        .res-summary {
+            padding: 14px 22px 0;
+            font-size: 12.5px; color: var(--muted);
+        }
+        .res-summary span { font-weight: 700; color: var(--text); }
+
         /* ===== TOAST ===== */
         #toast {
             position: fixed; bottom: 24px; right: 24px;
@@ -305,7 +384,7 @@
         <% } %>
 
         <div class="nav-section-label" style="margin-top:12px;">Operations</div>
-        <a class="nav-item" href="#"><span class="ni">&#128716;</span> Bookings</a>
+        <a class="nav-item" data-page="reservations" href="#" onclick="showPage('reservations');return false;"><span class="ni">&#128716;</span> Bookings</a>
         <a class="nav-item" data-page="rooms" href="#" onclick="showPage('rooms');return false;"><span class="ni">&#127968;</span> Rooms</a>
         <a class="nav-item" href="#"><span class="ni">&#128203;</span> Reports</a>
         <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
@@ -340,12 +419,12 @@
 
         <!-- Stat Cards -->
         <div class="stats-row">
-            <div class="stat">
+            <div class="stat" style="cursor:pointer" onclick="showPage('reservations')">
                 <div class="stat-icon si-blue">&#128716;</div>
                 <div class="stat-info">
                     <div class="s-label">Total Reservations</div>
-                    <div class="s-value"></div>
-                    <div class="s-sub">Coming soon</div>
+                    <div class="s-value" id="statReservations">0</div>
+                    <div class="s-sub">All bookings</div>
                 </div>
             </div>
             <div class="stat" style="cursor:pointer" onclick="showPage('rooms')">
@@ -377,7 +456,7 @@
         <!-- Quick Actions -->
         <div class="section-hd">Quick Actions</div>
         <div class="actions-row">
-            <button class="act-btn"><span class="ai">&#128716;</span> New Booking</button>
+            <button class="act-btn" onclick="showPage('reservations')"><span class="ai">&#128716;</span> New Booking</button>
             <button class="act-btn"><span class="ai">&#128100;</span> Guest Check-In</button>
             <button class="act-btn"><span class="ai">&#127968;</span> Room Status</button>
             <button class="act-btn"><span class="ai">&#128203;</span> Reports</button>
@@ -470,6 +549,50 @@
         </div>
     </div><!-- /#page-guests -->
     <% } %>
+
+    <!-- ===== VIEW: RESERVATIONS ===== -->
+    <div id="page-reservations" style="display:none;">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Reservation Management</h2>
+                <% if ("admin".equalsIgnoreCase(role)) { %>
+                <button class="btn-add-new" onclick="openNewReservationModal()">&#43; New Reservation</button>
+                <% } %>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="res-filters">
+                <button class="filter-pill active" id="rpill-all"       onclick="setResFilter('all')">&#128221; All <span class="fp-count" id="rc-all">0</span></button>
+                <button class="filter-pill"        id="rpill-today_in"  onclick="setResFilter('today_in')">&#128100; Today Check-In <span class="fp-count" id="rc-today_in">0</span></button>
+                <button class="filter-pill"        id="rpill-today_out" onclick="setResFilter('today_out')">&#128682; Today Check-Out <span class="fp-count" id="rc-today_out">0</span></button>
+                <button class="filter-pill"        id="rpill-upcoming"  onclick="setResFilter('upcoming')">&#128197; Upcoming <span class="fp-count" id="rc-upcoming">0</span></button>
+                <button class="filter-pill"        id="rpill-checked_in"  onclick="setResFilter('checked_in')">&#127981; Checked In <span class="fp-count" id="rc-checked_in">0</span></button>
+                <button class="filter-pill"        id="rpill-checked_out" onclick="setResFilter('checked_out')">&#128682; Checked Out <span class="fp-count" id="rc-checked_out">0</span></button>
+                <button class="filter-pill"        id="rpill-cancelled" onclick="setResFilter('cancelled')">&#10060; Cancelled <span class="fp-count" id="rc-cancelled">0</span></button>
+            </div>
+
+            <div class="res-summary">Showing <span id="resShownCount">0</span> reservation(s)</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Guest</th>
+                        <th>Room</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Nights</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody id="reservationBody">
+                    <tr><td colspan="9" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- /#page-reservations -->
 
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
@@ -607,6 +730,70 @@
     </div>
 </div>
 
+<!-- New Reservation Modal -->
+<div class="overlay" id="reservationModalOverlay">
+    <div class="modal" style="width:520px;">
+        <div class="modal-hd">
+            <h3 id="reservationModalTitle">New Reservation</h3>
+            <button class="modal-close" onclick="closeReservationModal()">&#215;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+
+            <!-- Guest Search -->
+            <div class="fg" style="grid-column:1/-1;">
+                <label>Guest</label>
+                <input type="hidden" id="inputResGuestId">
+                <!-- Search box (shown when no guest selected) -->
+                <div class="guest-search-wrap" id="guestSearchWrap">
+                    <span class="guest-search-icon">&#128269;</span>
+                    <input type="text" id="inputGuestSearch"
+                           placeholder="Search by name, phone or email&hellip;"
+                           autocomplete="off"
+                           oninput="filterGuestResults(this.value)"
+                           onfocus="filterGuestResults(this.value)">
+                    <div class="guest-results" id="guestResults"></div>
+                </div>
+                <!-- Selected guest card (shown after selection) -->
+                <div class="guest-selected-card" id="guestSelectedCard">
+                    <div class="gsc-avatar" id="gscAvatar">?</div>
+                    <div class="gsc-info">
+                        <div class="gsc-name" id="gscName"></div>
+                        <div class="gsc-sub"  id="gscSub"></div>
+                    </div>
+                    <button class="gsc-clear" onclick="clearGuestSelection()" title="Change guest">&#215;</button>
+                </div>
+            </div>
+
+            <div class="fg" style="grid-column:1/-1;">
+                <label>Room</label>
+                <select id="inputResRoom" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;" onchange="calcTotalPrice()">
+                    <option value="" data-price="0">-- Select Room --</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>Check-In Date</label>
+                <input type="date" id="inputResCheckIn" onchange="calcTotalPrice()">
+            </div>
+            <div class="fg">
+                <label>Check-Out Date</label>
+                <input type="date" id="inputResCheckOut" onchange="calcTotalPrice()">
+            </div>
+            <div class="fg">
+                <label>Total Price ($)</label>
+                <input type="number" id="inputResTotalPrice" placeholder="Auto-calculated" min="0" step="0.01">
+            </div>
+        </div>
+        <div class="fg">
+            <label>Notes (optional)</label>
+            <input type="text" id="inputResNotes" placeholder="e.g. Late arrival, extra bed requested">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeReservationModal()">Cancel</button>
+            <button class="btn-save" onclick="saveReservation()">Create Reservation</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -622,7 +809,7 @@
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management' };
 
     function showPage(name) {
         // Hide all page views
@@ -642,6 +829,7 @@
         if (name === 'receptionists') loadReceptionists();
         if (name === 'rooms') loadRooms();
         if (name === 'guests') loadGuests();
+        if (name === 'reservations') loadReservations();
     }
 
     function showToast(msg) {
@@ -772,6 +960,7 @@
         loadReceptionists();
         loadRoomsCount();
         loadGuestsCount();
+        loadReservationsCount();
         <% } %>
     });
 
@@ -1012,6 +1201,256 @@
             success: function(res) {
                 if (res.success) { showToast(res.message || 'Guest deleted.'); closeGuestModal(); loadGuests(); }
                 else showToast(res.message || 'Delete failed.');
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    /* ---- Reservation management ---- */
+    let _allReservations = [];
+    let _activeResFilter = 'all';
+
+    const RES_STATUS_STYLES = {
+        confirmed:   'background:#dcfce7;color:#15803d;',
+        pending:     'background:#fef3c7;color:#92400e;',
+        cancelled:   'background:#fee2e2;color:#b91c1c;',
+        checked_in:  'background:#dbeafe;color:#1e40af;',
+        checked_out: 'background:#f3e8ff;color:#6b21a8;'
+    };
+
+    function loadReservationsCount() {
+        $.getJSON(CTX + '/api/reservation', function(list) {
+            $('#statReservations').text(list ? list.length : 0);
+        });
+    }
+
+    function loadReservations() {
+        $.getJSON(CTX + '/api/reservation', function(list) {
+            _allReservations = list || [];
+            $('#statReservations').text(_allReservations.length);
+            _updateFilterCounts();
+            applyReservationFilter(_activeResFilter);
+        }).fail(function() {
+            $('#reservationBody').html('<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--danger);">Failed to load reservations.</td></tr>');
+        });
+    }
+
+    function _updateFilterCounts() {
+        const today = new Date().toISOString().split('T')[0];
+        const counts = {
+            all:         _allReservations.length,
+            today_in:    _allReservations.filter(r => r.checkInDate  === today).length,
+            today_out:   _allReservations.filter(r => r.checkOutDate === today).length,
+            upcoming:    _allReservations.filter(r => r.checkInDate > today && r.status !== 'cancelled').length,
+            confirmed:   _allReservations.filter(r => r.status === 'confirmed').length,
+            pending:     _allReservations.filter(r => r.status === 'pending').length,
+            checked_in:  _allReservations.filter(r => r.status === 'checked_in').length,
+            checked_out: _allReservations.filter(r => r.status === 'checked_out').length,
+            cancelled:   _allReservations.filter(r => r.status === 'cancelled').length
+        };
+        $.each(counts, function(key, val) {
+            $('#rc-' + key).text(val);
+        });
+    }
+
+    function setResFilter(name) {
+        _activeResFilter = name;
+        // Update pill active state
+        $('.filter-pill').removeClass('active');
+        $('#rpill-' + name).addClass('active');
+        applyReservationFilter(name);
+    }
+
+    function applyReservationFilter(name) {
+        const today = new Date().toISOString().split('T')[0];
+        let filtered;
+        switch (name) {
+            case 'today_in':    filtered = _allReservations.filter(r => r.checkInDate  === today); break;
+            case 'today_out':   filtered = _allReservations.filter(r => r.checkOutDate === today); break;
+            case 'upcoming':    filtered = _allReservations.filter(r => r.checkInDate > today && r.status !== 'cancelled'); break;
+            case 'confirmed':   filtered = _allReservations.filter(r => r.status === 'confirmed');   break;
+            case 'pending':     filtered = _allReservations.filter(r => r.status === 'pending');     break;
+            case 'checked_in':  filtered = _allReservations.filter(r => r.status === 'checked_in');  break;
+            case 'checked_out': filtered = _allReservations.filter(r => r.status === 'checked_out'); break;
+            case 'cancelled':   filtered = _allReservations.filter(r => r.status === 'cancelled');   break;
+            default:            filtered = _allReservations;
+        }
+        _renderReservationTable(filtered);
+    }
+
+    function _renderReservationTable(list) {
+        const tbody = $('#reservationBody');
+        tbody.empty();
+        $('#resShownCount').text(list.length);
+        if (list.length === 0) {
+            tbody.append('<tr><td colspan="9" style="text-align:center;padding:28px;color:#94a3b8;">No reservations match this filter.</td></tr>');
+            return;
+        }
+        $.each(list, function(i, r) {
+            const style = RES_STATUS_STYLES[r.status] || 'background:#f1f5f9;color:#475569;';
+            const rawStatus = r.status ? r.status.replace('_', ' ') : '';
+            const badge = '<span class="chip" style="' + style + '">' + escHtml(rawStatus) + '</span>';
+            const checkIn  = r.checkInDate  || '';
+            const checkOut = r.checkOutDate || '';
+            const created  = r.createdAt ? r.createdAt.substring(0,10) : '';
+            // Highlight today's check-ins / check-outs
+            const today = new Date().toISOString().split('T')[0];
+            let rowStyle = '';
+            if (checkIn === today)  rowStyle = 'background:#f0fdf4;';
+            if (checkOut === today) rowStyle = 'background:#fff7ed;';
+            // Nights
+            let nights = '';
+            if (checkIn && checkOut) {
+                nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+            }
+            tbody.append(
+                '<tr style="' + rowStyle + '">'
+                + '<td style="color:#94a3b8;font-size:12px;">' + (i+1) + '</td>'
+                + '<td style="font-weight:600;">' + escHtml(r.guestName) + '</td>'
+                + '<td style="font-weight:700;color:var(--primary);">' + escHtml(r.roomNumber) + '</td>'
+                + '<td style="color:#475569;">' + escHtml(checkIn) + '</td>'
+                + '<td style="color:#475569;">' + escHtml(checkOut) + '</td>'
+                + '<td style="text-align:center;color:var(--muted);">' + (nights || '—') + '</td>'
+                + '<td style="font-weight:600;">$' + parseFloat(r.totalPrice || 0).toFixed(2) + '</td>'
+                + '<td>' + badge + '</td>'
+                + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
+                + '</tr>'
+            );
+        });
+    }
+
+    function openNewReservationModal() {
+        // Reset guest search
+        clearGuestSelection();
+        // Load all guests into memory for search
+        $.getJSON(CTX + '/api/guest', function(guests) {
+            _resGuestList = guests || [];
+        });
+        // Populate available room dropdown
+        $.getJSON(CTX + '/api/room', function(rooms) {
+            const $sel = $('#inputResRoom').empty().append('<option value="" data-price="0">-- Select Room --</option>');
+            $.each(rooms || [], function(i, r) {
+                if (r.status === 'available') {
+                    $sel.append('<option value="' + r.id + '" data-price="' + r.pricePerNight + '">' +
+                        'Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') — $' + parseFloat(r.pricePerNight).toFixed(2) + '/night' +
+                        '</option>');
+                }
+            });
+        });
+        // Set default dates (today and tomorrow)
+        const today = new Date();
+        const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
+        $('#inputResCheckIn').val(today.toISOString().split('T')[0]);
+        $('#inputResCheckOut').val(tomorrow.toISOString().split('T')[0]);
+        $('#inputResTotalPrice').val('');
+        $('#inputResNotes').val('');
+        calcTotalPrice();
+        $('#reservationModalOverlay').addClass('open');
+        setTimeout(function(){ $('#inputGuestSearch').focus(); }, 150);
+    }
+
+    /* ---- Guest search in reservation modal ---- */
+    let _resGuestList = [];
+
+    function filterGuestResults(term) {
+        const $results = $('#guestResults');
+        $results.empty();
+        const q = term.trim().toLowerCase();
+        const matches = q.length === 0
+            ? _resGuestList.slice(0, 8)          // show first 8 when input is empty
+            : _resGuestList.filter(function(g) {
+                const name  = ((g.firstName || '') + ' ' + (g.lastName || '')).toLowerCase();
+                const email = (g.email  || '').toLowerCase();
+                const phone = (g.phone  || '').toLowerCase();
+                return name.includes(q) || email.includes(q) || phone.includes(q);
+            });
+
+        if (matches.length === 0) {
+            $results.append('<div class="guest-result-empty">No guests found.</div>');
+        } else {
+            $.each(matches, function(i, g) {
+                const fullName = (g.firstName || '') + ' ' + (g.lastName || '');
+                const initials = fullName.trim().charAt(0).toUpperCase();
+                const sub = [g.phone, g.email].filter(Boolean).join(' • ');
+                const $item = $('<div class="guest-result-item">'
+                    + '<div class="gri-avatar">' + escHtml(initials) + '</div>'
+                    + '<div><div class="gri-name">' + escHtml(fullName.trim()) + '</div>'
+                    + '<div class="gri-sub">' + escHtml(sub) + '</div></div>'
+                    + '</div>');
+                $item.on('mousedown', function(e) {
+                    e.preventDefault(); // prevent blur before click fires
+                    selectGuest(g);
+                });
+                $results.append($item);
+            });
+        }
+        $results.addClass('open');
+    }
+
+    function selectGuest(g) {
+        const fullName = ((g.firstName || '') + ' ' + (g.lastName || '')).trim();
+        const sub = [g.phone, g.email].filter(Boolean).join(' • ');
+        $('#inputResGuestId').val(g.id);
+        $('#gscAvatar').text(fullName.charAt(0).toUpperCase());
+        $('#gscName').text(fullName);
+        $('#gscSub').text(sub);
+        $('#guestSelectedCard').css('display','flex');
+        $('#guestSearchWrap').hide();
+        $('#guestResults').removeClass('open').empty();
+    }
+
+    function clearGuestSelection() {
+        $('#inputResGuestId').val('');
+        $('#inputGuestSearch').val('');
+        $('#guestSelectedCard').hide();
+        $('#guestSearchWrap').show();
+        $('#guestResults').removeClass('open').empty();
+    }
+
+    // Close guest results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#guestSearchWrap').length) {
+            $('#guestResults').removeClass('open');
+        }
+    });
+
+    function closeReservationModal() { $('#reservationModalOverlay').removeClass('open'); }
+
+    function calcTotalPrice() {
+        const $roomOpt = $('#inputResRoom option:selected');
+        const price = parseFloat($roomOpt.data('price')) || 0;
+        const checkIn  = $('#inputResCheckIn').val();
+        const checkOut = $('#inputResCheckOut').val();
+        if (price > 0 && checkIn && checkOut) {
+            const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+            $('#inputResTotalPrice').val((price * nights).toFixed(2));
+        }
+    }
+
+    function saveReservation() {
+        const guestId    = $('#inputResGuestId').val();
+        const roomId     = $('#inputResRoom').val();
+        const checkIn    = $('#inputResCheckIn').val();
+        const checkOut   = $('#inputResCheckOut').val();
+        const totalPrice = $('#inputResTotalPrice').val();
+        const status     = 'confirmed';
+        const notes      = $('#inputResNotes').val().trim();
+        if (!guestId)  { showToast('Please select a guest.');       return; }
+        if (!roomId)   { showToast('Please select a room.');        return; }
+        if (!checkIn)  { showToast('Check-in date is required.');   return; }
+        if (!checkOut) { showToast('Check-out date is required.');  return; }
+        if (new Date(checkOut) <= new Date(checkIn)) { showToast('Check-out must be after check-in.'); return; }
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'POST',
+            data: { guestId, roomId, checkInDate: checkIn, checkOutDate: checkOut, totalPrice, status, notes },
+            success: function(res) {
+                if (res.success) {
+                    showToast(res.message || 'Reservation created.');
+                    closeReservationModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Failed to create reservation.');
+                }
             },
             error: function() { showToast('Server error.'); }
         });
