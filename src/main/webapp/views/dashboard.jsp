@@ -548,7 +548,7 @@
         <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
         <a class="nav-item" data-page="reports" href="#" onclick="showPage('reports');return false;"><span class="ni">&#128203;</span> Reports</a>
         <% } %>
-        <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
+        <a class="nav-item" data-page="help" href="#" onclick="showPage('help');return false;"><span class="ni">&#10067;</span> Help</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -906,6 +906,118 @@
     </div><!-- /#page-reports -->
     <% } %>
 
+    <!-- ===== VIEW: HELP ===== -->
+    <div id="page-help" style="display:none;">
+        <div class="panel" style="max-width:860px;margin:0 auto;">
+            <div class="panel-header"><h2>&#10067; Help &amp; Guide</h2></div>
+            <div style="padding:24px 28px;">
+
+                <!-- Quick Start -->
+                <h3 style="color:var(--primary);margin-bottom:8px;">&#9654; Getting Started</h3>
+                <p style="color:#475569;margin-bottom:20px;">Use the left sidebar to navigate between sections. Your role determines which sections are available to you.</p>
+
+                <!-- FAQ accordion -->
+                <style>
+                    .help-section { border:1px solid #e2e8f0; border-radius:10px; margin-bottom:14px; overflow:hidden; }
+                    .help-section summary { padding:14px 18px; font-weight:600; color:#1e293b; cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; background:#f8fafc; }
+                    .help-section summary::-webkit-details-marker { display:none; }
+                    .help-section summary::before { content:'\002B'; font-size:18px; color:var(--primary); }
+                    .help-section[open] summary::before { content:'\2212'; }
+                    .help-section .help-body { padding:16px 20px; color:#475569; line-height:1.7; background:#fff; }
+                    .help-section .help-body ul { margin:8px 0 0 18px; }
+                    .help-section .help-body li { margin-bottom:6px; }
+                    .help-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; margin-left:6px; vertical-align:middle; }
+                    .hb-admin { background:#fef3c7; color:#92400e; }
+                    .hb-both  { background:#dcfce7; color:#166534; }
+                    .help-contact { background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:12px; padding:20px 24px; margin-top:24px; display:flex; gap:20px; flex-wrap:wrap; }
+                    .help-contact-item { display:flex; align-items:center; gap:10px; flex:1; min-width:200px; }
+                    .help-contact-icon { font-size:28px; }
+                </style>
+
+                <!-- Dashboard -->
+                <details class="help-section" open>
+                    <summary>&#128202; Dashboard Overview <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        The Dashboard shows live KPI cards for today&apos;s check-ins/check-outs, total rooms, occupied rooms, and active guests.
+                        <ul>
+                            <li><strong>Today&apos;s Check-ins</strong> – reservations with today&apos;s check-in date.</li>
+                            <li><strong>Today&apos;s Check-outs</strong> – reservations with today&apos;s check-out date.</li>
+                            <li><strong>Occupied Rooms</strong> – rooms currently marked <em>occupied</em>.</li>
+                            <li>Quick Action buttons let you jump directly to common tasks.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Bookings -->
+                <details class="help-section">
+                    <summary>&#128716; Bookings (Reservations) <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>New Booking</strong> – click <em>&quot;+ New Reservation&quot;</em>, search for a guest, pick a room and dates, then save.</li>
+                            <li><strong>Check In</strong> – click the green <em>Check In</em> button on a confirmed/pending reservation.</li>
+                            <li><strong>Check Out</strong> – click the blue <em>Check Out</em> button on a checked-in reservation.</li>
+                            <li><strong>Cancel</strong> – click the red <em>Cancel</em> button on any active reservation.</li>
+                            <li><strong>Manage</strong> – edit room assignment, dates, price, and notes for any reservation.</li>
+                            <li><strong>Bill</strong> – click <em>&#128438; Bill</em> to preview and print the guest invoice.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Guests -->
+                <details class="help-section">
+                    <summary>&#128100; Guest Management <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>Register Guest</strong> – fill in first name, last name, email, phone, address and ID type.</li>
+                            <li><strong>Edit</strong> – click the pencil icon on any guest row to update their details.</li>
+                            <li><strong>Delete</strong> – click the trash icon; all reservations for that guest are removed first.</li>
+                            <li>Use the search box to find guests by name, ID, phone, or email.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Rooms -->
+                <details class="help-section">
+                    <summary>&#127968; Room Management <span class="help-badge hb-admin">Admin only</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>Add Room</strong> – specify room number, type, floor, capacity, price, and status.</li>
+                            <li><strong>Edit / Delete</strong> – use the action buttons in each room row.</li>
+                            <li>Room status (<em>available / occupied / maintenance</em>) syncs automatically with check-in and check-out actions.</li>
+                            <li>The <em>Availability</em> cards at the top give a real-time count by status.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Reports -->
+                <details class="help-section">
+                    <summary>&#128203; Reports &amp; History <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li>KPI cards show totals for the selected date range: revenue, reservations, check-ins, and check-outs.</li>
+                            <li>The bar chart visualises monthly reservation counts for the current year.</li>
+                            <li>Use the <strong>Filter</strong> fields to narrow results by date range, status, or guest details (name / ID / phone / email).</li>
+                            <li>Click <strong>&#128438; Print Report</strong> to send the filtered table to the printer.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Receptionists -->
+                <details class="help-section">
+                    <summary>&#128101; Receptionist Management <span class="help-badge hb-admin">Admin only</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>Add Receptionist</strong> – enter username, full name, email, and a secure password.</li>
+                            <li><strong>Edit / Delete</strong> – manage existing receptionist accounts from this page.</li>
+                        </ul>
+                    </div>
+                </details>
+
+
+            </div>
+        </div>
+    </div><!-- /#page-help -->
+
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
 
@@ -1191,7 +1303,7 @@
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management', reports: 'Reports & History' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management', reports: 'Reports & History', help: 'Help & Guide' };
 
     function showPage(name) {
         // Hide all page views
