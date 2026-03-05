@@ -395,19 +395,121 @@
             display:flex;gap:10px;justify-content:flex-end;
             padding:12px 16px;border-top:1px solid #e2e8f0;background:#f8fafc;
         }
+        /* ===== REPORTS PAGE ===== */
+        .rpt-kpi-row {
+            display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;margin-bottom:28px;
+        }
+        .rpt-kpi {
+            background:var(--card);border-radius:14px;padding:20px 18px;
+            box-shadow:0 1px 4px rgba(0,0,0,.06);
+            display:flex;align-items:center;gap:14px;
+        }
+        .rpt-kpi-icon {
+            width:46px;height:46px;border-radius:12px;
+            display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+        }
+        .rpt-kpi-info .rk-lbl { font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:2px; }
+        .rpt-kpi-info .rk-val { font-size:26px;font-weight:700;color:var(--text);line-height:1; }
+        .rpt-kpi-info .rk-sub { font-size:11px;color:var(--muted);margin-top:3px; }
+
+        .rpt-filter-bar {
+            background:var(--card);border-radius:12px;padding:16px 20px;
+            margin-bottom:22px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+            box-shadow:0 1px 4px rgba(0,0,0,.05);
+        }
+        .rpt-filter-bar .fg { margin:0;min-width:140px; }
+        .rpt-filter-bar .fg label { font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block; }
+        .rpt-filter-bar .fg input,
+        .rpt-filter-bar .fg select {
+            padding:8px 12px;border:1px solid var(--border);border-radius:8px;
+            font-size:13px;font-family:inherit;outline:none;width:100%;
+            background:var(--card);color:var(--text);
+            transition:border-color .15s;
+        }
+        .rpt-filter-bar .fg input:focus,
+        .rpt-filter-bar .fg select:focus { border-color:var(--primary); }
+        .btn-rpt-apply {
+            background:var(--primary);color:#fff;border:none;
+            padding:9px 22px;border-radius:8px;cursor:pointer;
+            font-size:13px;font-weight:600;font-family:inherit;
+            transition:background .15s;align-self:flex-end;
+        }
+        .btn-rpt-apply:hover { background:var(--primary-d); }
+        .btn-rpt-print {
+            margin-left:auto;background:#f0fdf4;color:#15803d;
+            border:1px solid #86efac;padding:9px 20px;border-radius:8px;
+            cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;
+            display:flex;align-items:center;gap:7px;transition:all .15s;
+        }
+        .btn-rpt-print:hover { background:#dcfce7; }
+
+        .rpt-section-hd { font-size:14px;font-weight:700;color:var(--text);margin:28px 0 14px; }
+
+        /* Monthly bar chart */
+        .rpt-bar-grid {
+            display:grid;grid-template-columns:repeat(12,1fr);gap:8px;
+            align-items:flex-end;height:140px;margin-bottom:8px;
+        }
+        .rpt-bar-col { display:flex;flex-direction:column;align-items:center;gap:4px; }
+        .rpt-bar {
+            width:100%;background:var(--primary);border-radius:5px 5px 0 0;
+            min-height:4px;transition:height .4s;
+        }
+        .rpt-bar-lbl { font-size:10px;color:var(--muted);white-space:nowrap; }
+        .rpt-bar-val { font-size:11px;font-weight:700;color:var(--text); }
+        .rpt-chart-wrap {
+            background:var(--card);border-radius:12px;
+            padding:20px 22px 14px;margin-bottom:28px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05);
+        }
+        .rpt-chart-legend {
+            display:flex;gap:20px;font-size:11.5px;color:var(--muted);
+            margin-top:6px;padding-top:10px;border-top:1px solid var(--border);
+        }
+        .rpt-chart-legend span { display:inline-flex;align-items:center;gap:5px; }
+        .rpt-chart-legend .dot { width:10px;height:10px;border-radius:50%;background:var(--primary); }
+        .rpt-chart-legend .dot-rev { background:#10b981; }
+
+        /* History table wrapper */
+        .rpt-table-wrap {
+            background:var(--card);border-radius:12px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;
+        }
+        .rpt-table-hd {
+            display:flex;align-items:center;justify-content:space-between;
+            padding:14px 20px;border-bottom:1px solid var(--border);
+        }
+        .rpt-table-hd h3 { font-size:14px;font-weight:700;color:var(--text); }
+        .rpt-table-hd small { font-size:12px;color:var(--muted); }
+
         @media print {
-            body > *:not(#billOverlay) { display:none !important; }
-            #billOverlay { position:static !important;background:none !important;display:block !important; }
-            #billBox { box-shadow:none !important;border-radius:0 !important;width:100% !important; }
-            #billHead { padding:36px 48px !important; }
-            #billHead h2 { font-size:30px !important; }
-            #billHead p  { font-size:16px !important; }
-            #billBody { padding:36px 48px !important; }
-            #billBody .b-row { font-size:18px !important;padding:10px 0 !important; }
-            #billBody .b-total { font-size:24px !important;padding-top:16px !important; }
-            #billBody .b-notes { font-size:16px !important; }
-            #billBody #billDate { font-size:14px !important; }
-            #billActions { display:none !important; }
+            /* === Bill printing (body.print-bill) === */
+            body.print-bill > *:not(#billOverlay) { display:none !important; }
+            body.print-bill #billOverlay { position:static !important;background:none !important;display:block !important; }
+            body.print-bill #billBox { box-shadow:none !important;border-radius:0 !important;width:100% !important; }
+            body.print-bill #billHead { padding:36px 48px !important; }
+            body.print-bill #billHead h2 { font-size:30px !important; }
+            body.print-bill #billHead p  { font-size:16px !important; }
+            body.print-bill #billBody { padding:36px 48px !important; }
+            body.print-bill #billBody .b-row { font-size:18px !important;padding:10px 0 !important; }
+            body.print-bill #billBody .b-total { font-size:24px !important;padding-top:16px !important; }
+            body.print-bill #billBody .b-notes { font-size:16px !important; }
+            body.print-bill #billBody #billDate { font-size:14px !important; }
+            body.print-bill #billActions { display:none !important; }
+
+            /* === Report printing (body.print-report) === */
+            body.print-report .sidebar,
+            body.print-report .topbar,
+            body.print-report #billOverlay,
+            body.print-report .rpt-filter-bar,
+            body.print-report .btn-rpt-print { display:none !important; }
+            body.print-report .main-wrap { margin-left:0 !important; }
+            body.print-report #page-reports { display:block !important; }
+            body.print-report .rpt-kpi-info .rk-val { font-size:22px !important; }
+            body.print-report table { font-size:11px !important; }
+            body.print-report thead th { font-size:10px !important; }
+            body.print-report tbody td { padding:6px 10px !important; }
+
             @page { size:A4;margin:1.5cm; }
         }
     </style>
@@ -441,7 +543,9 @@
         <div class="nav-section-label" style="margin-top:12px;">Operations</div>
         <a class="nav-item" data-page="reservations" href="#" onclick="showPage('reservations');return false;"><span class="ni">&#128716;</span> Bookings</a>
         <a class="nav-item" data-page="rooms" href="#" onclick="showPage('rooms');return false;"><span class="ni">&#127968;</span> Rooms</a>
-        <a class="nav-item" href="#"><span class="ni">&#128203;</span> Reports</a>
+        <% if ("admin".equalsIgnoreCase(role)) { %>
+        <a class="nav-item" data-page="reports" href="#" onclick="showPage('reports');return false;"><span class="ni">&#128203;</span> Reports</a>
+        <% } %>
         <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
     </nav>
 
@@ -514,7 +618,9 @@
             <button class="act-btn" onclick="showPage('reservations')"><span class="ai">&#128716;</span> New Booking</button>
             <button class="act-btn"><span class="ai">&#128100;</span> Guest Check-In</button>
             <button class="act-btn"><span class="ai">&#127968;</span> Room Status</button>
-            <button class="act-btn"><span class="ai">&#128203;</span> Reports</button>
+            <% if ("admin".equalsIgnoreCase(role)) { %>
+            <button class="act-btn" onclick="showPage('reports')"><span class="ai">&#128203;</span> Reports</button>
+            <% } %>
             <button class="act-btn"><span class="ai">&#9881;</span> Settings</button>
         </div>
 
@@ -651,6 +757,117 @@
             </table>
         </div>
     </div><!-- /#page-reservations -->
+
+    <!-- ===== VIEW: REPORTS (admin only) ===== -->
+    <% if ("admin".equalsIgnoreCase(role)) { %>
+    <div id="page-reports" style="display:none;">
+
+        <!-- KPI Cards -->
+        <div class="rpt-kpi-row">
+            <div class="rpt-kpi">
+                <div class="rpt-kpi-icon si-blue">&#128716;</div>
+                <div class="rpt-kpi-info">
+                    <div class="rk-lbl">Total Reservations</div>
+                    <div class="rk-val" id="rptTotal">0</div>
+                    <div class="rk-sub" id="rptTotalSub">in selected period</div>
+                </div>
+            </div>
+            <div class="rpt-kpi">
+                <div class="rpt-kpi-icon si-green">&#128176;</div>
+                <div class="rpt-kpi-info">
+                    <div class="rk-lbl">Total Revenue</div>
+                    <div class="rk-val" id="rptRevenue">$0</div>
+                    <div class="rk-sub">from completed stays</div>
+                </div>
+            </div>
+            <div class="rpt-kpi">
+                <div class="rpt-kpi-icon si-amber">&#127769;</div>
+                <div class="rpt-kpi-info">
+                    <div class="rk-lbl">Avg Stay</div>
+                    <div class="rk-val" id="rptAvgNights">0</div>
+                    <div class="rk-sub">nights per reservation</div>
+                </div>
+            </div>
+            <div class="rpt-kpi">
+                <div class="rpt-kpi-icon si-purple">&#10060;</div>
+                <div class="rpt-kpi-info">
+                    <div class="rk-lbl">Cancellation Rate</div>
+                    <div class="rk-val" id="rptCancelRate">0%</div>
+                    <div class="rk-sub">of all reservations</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="rpt-filter-bar">
+            <div class="fg" style="min-width:220px;flex:1;">
+                <label>&#128269; Search Guest (name / ID / phone / email)</label>
+                <input type="text" id="rptSearch" placeholder="e.g. John, #12, 077..." oninput="applyReportFilter()">
+            </div>
+            <div class="fg">
+                <label>From Date</label>
+                <input type="date" id="rptFrom">
+            </div>
+            <div class="fg">
+                <label>To Date</label>
+                <input type="date" id="rptTo">
+            </div>
+            <div class="fg">
+                <label>Status</label>
+                <select id="rptStatus" onchange="applyReportFilter()">
+                    <option value="all">All Statuses</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="checked_in">Checked In</option>
+                    <option value="checked_out">Checked Out</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <button class="btn-rpt-apply" onclick="applyReportFilter()">Apply Filter</button>
+            <button class="btn-rpt-print" onclick="printReport()">&#128438; Print Report</button>
+        </div>
+
+        <!-- Monthly Breakdown Chart -->
+        <div class="rpt-section-hd">Monthly Breakdown (Last 12 Months)</div>
+        <div class="rpt-chart-wrap">
+            <div class="rpt-bar-grid" id="rptBarGrid"></div>
+            <div class="rpt-chart-legend">
+                <span><i class="dot"></i> Reservations per month</span>
+                <span id="rptChartPeak"></span>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="rpt-table-wrap">
+            <div class="rpt-table-hd">
+                <h3>Reservation History</h3>
+                <small id="rptHistoryCount">0 records</small>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Guest</th>
+                        <th>ID#</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Room</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Nights</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="rptHistoryBody">
+                    <tr><td colspan="12" style="text-align:center;padding:28px;color:#94a3b8;">Apply a filter to load history.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- /#page-reports -->
+    <% } %>
 
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
@@ -911,7 +1128,7 @@
         </div>
         <div id="billActions">
             <button class="btn-cancel" onclick="document.getElementById('billOverlay').classList.remove('open')">Close</button>
-            <button class="btn-save" onclick="var t=document.title;document.title='OceanView Resort - Invoice';window.print();document.title=t;">&#128438;&nbsp; Print</button>
+            <button class="btn-save" onclick="var t=document.title;document.title='OceanView Resort - Invoice';document.body.classList.add('print-bill');window.print();document.body.classList.remove('print-bill');document.title=t;">&#128438;&nbsp; Print</button>
         </div>
     </div>
 </div>
@@ -937,7 +1154,7 @@
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management', reports: 'Reports & History' };
 
     function showPage(name) {
         // Hide all page views
@@ -958,6 +1175,7 @@
         if (name === 'rooms') loadRooms();
         if (name === 'guests') loadGuests();
         if (name === 'reservations') loadReservations();
+        if (name === 'reports')      loadReport();
     }
 
     function showToast(msg) {
@@ -1742,6 +1960,158 @@
             },
             error: function() { showToast('Server error.'); }
         });
+    }
+
+    /* ===== REPORTS ===== */
+    let _rptFiltered = [];
+
+    function loadReport() {
+        // Default filter: current year
+        const now = new Date();
+        const y = now.getFullYear();
+        if (!$('#rptFrom').val()) $('#rptFrom').val(y + '-01-01');
+        if (!$('#rptTo').val())   $('#rptTo').val(y + '-12-31');
+        applyReportFilter();
+    }
+
+    function applyReportFilter() {
+        const from   = $('#rptFrom').val();
+        const to     = $('#rptTo').val();
+        const status = $('#rptStatus').val();
+        const search = $('#rptSearch').val();
+
+        // Reload reservations from server if not yet loaded
+        if (_allReservations.length === 0) {
+            $.getJSON(CTX + '/api/reservations', function(data) {
+                _allReservations = data || [];
+                _buildReport(from, to, status, search);
+            });
+        } else {
+            _buildReport(from, to, status, search);
+        }
+    }
+
+    function _buildReport(from, to, status, search) {
+        let list = _allReservations.slice();
+
+        // Date range filter (by checkInDate)
+        if (from) list = list.filter(function(r){ return r.checkInDate >= from; });
+        if (to)   list = list.filter(function(r){ return r.checkInDate <= to;   });
+        if (status && status !== 'all') list = list.filter(function(r){ return r.status === status; });
+
+        // Guest search: name, id, phone, email
+        if (search && search.trim() !== '') {
+            const q = search.trim().toLowerCase().replace(/^#/, '');
+            list = list.filter(function(r) {
+                return (r.guestName  || '').toLowerCase().indexOf(q) >= 0
+                    || String(r.guestId || '').indexOf(q) >= 0
+                    || String(r.id    || '').indexOf(q) >= 0
+                    || (r.guestPhone  || '').toLowerCase().indexOf(q) >= 0
+                    || (r.guestEmail  || '').toLowerCase().indexOf(q) >= 0;
+            });
+        }
+
+        _rptFiltered = list;
+
+        // --- KPI Cards ---
+        const total    = list.length;
+        const revenue  = list.reduce(function(s,r){ return s + (parseFloat(r.totalPrice)||0); }, 0);
+        const cancelled = list.filter(function(r){ return r.status === 'cancelled'; }).length;
+        const cancelRate = total > 0 ? Math.round(cancelled / total * 100) : 0;
+        const totalNights = list.reduce(function(s,r){
+            if (!r.checkInDate || !r.checkOutDate) return s;
+            return s + Math.max(1, Math.round((new Date(r.checkOutDate) - new Date(r.checkInDate)) / 86400000));
+        }, 0);
+        const avgNights = total > 0 ? (totalNights / total).toFixed(1) : '0';
+
+        $('#rptTotal').text(total);
+        $('#rptTotalSub').text('from ' + (from||'all') + ' to ' + (to||'all'));
+        $('#rptRevenue').text('$' + revenue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}));
+        $('#rptAvgNights').text(avgNights);
+        $('#rptCancelRate').text(cancelRate + '%');
+
+        // --- Monthly Bar Chart (last 12 months within filter) ---
+        const monthCounts = {};
+        const today = new Date();
+        const months = [];
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+            const lbl = d.toLocaleDateString('en-US',{month:'short', year:'2-digit'});
+            months.push({ key: key, lbl: lbl });
+            monthCounts[key] = 0;
+        }
+        list.forEach(function(r) {
+            if (!r.checkInDate) return;
+            const mk = r.checkInDate.substring(0,7);
+            if (monthCounts.hasOwnProperty(mk)) monthCounts[mk]++;
+        });
+        const maxVal = Math.max(1, Math.max.apply(null, months.map(function(m){ return monthCounts[m.key]; })));
+        const peakMonth = months.reduce(function(best,m){ return monthCounts[m.key] > monthCounts[best.key] ? m : best; }, months[0]);
+
+        const $grid = $('#rptBarGrid').empty();
+        months.forEach(function(m) {
+            const cnt = monthCounts[m.key];
+            const pct = Math.round(cnt / maxVal * 100);
+            const barH = Math.max(4, Math.round(pct * 1.1)) + 'px';
+            $grid.append(
+                '<div class="rpt-bar-col">' +
+                  '<div class="rpt-bar-val">' + (cnt > 0 ? cnt : '') + '</div>' +
+                  '<div class="rpt-bar" style="height:' + barH + ';opacity:' + (0.4 + pct/100*0.6).toFixed(2) + '"></div>' +
+                  '<div class="rpt-bar-lbl">' + m.lbl + '</div>' +
+                '</div>'
+            );
+        });
+        $('#rptChartPeak').text(peakMonth && monthCounts[peakMonth.key] > 0
+            ? 'Peak: ' + peakMonth.lbl + ' (' + monthCounts[peakMonth.key] + ' reservations)' : '');
+
+        // --- History Table ---
+        const STATUS_LABELS = {
+            confirmed:   '<span class="chip" style="background:#dbeafe;color:#1d4ed8;">Confirmed</span>',
+            pending:     '<span class="chip" style="background:#fef3c7;color:#92400e;">Pending</span>',
+            checked_in:  '<span class="chip" style="background:#dcfce7;color:#15803d;">Checked In</span>',
+            checked_out: '<span class="chip" style="background:#e0e7ff;color:#3730a3;">Checked Out</span>',
+            cancelled:   '<span class="chip" style="background:#fee2e2;color:#b91c1c;">Cancelled</span>'
+        };
+
+        const $tbody = $('#rptHistoryBody').empty();
+        $('#rptHistoryCount').text(list.length + ' record' + (list.length===1?'':'s'));
+        if (list.length === 0) {
+            $tbody.html('<tr><td colspan="12" style="text-align:center;padding:28px;color:#94a3b8;">No records found for this filter.</td></tr>');
+            return;
+        }
+        list.forEach(function(r) {
+            const nights = (r.checkInDate && r.checkOutDate)
+                ? Math.max(1, Math.round((new Date(r.checkOutDate) - new Date(r.checkInDate)) / 86400000)) : '-';
+            const total  = parseFloat(r.totalPrice||0);
+            const statusHtml = STATUS_LABELS[r.status] ||
+                '<span class="chip" style="background:#f1f5f9;color:#64748b;">' + (r.status||'-') + '</span>';
+            $tbody.append(
+                '<tr>' +
+                  '<td style="color:var(--muted);font-size:12px;">#' + r.id + '</td>' +
+                  '<td>' + (r.guestName||'-') + '</td>' +
+                  '<td style="color:var(--muted);font-size:12px;">#' + (r.guestId||'-') + '</td>' +
+                  '<td style="font-size:12.5px;">' + (r.guestPhone||'—') + '</td>' +
+                  '<td style="font-size:12px;color:var(--muted);">' + (r.guestEmail||'—') + '</td>' +
+                  '<td>' + (r.roomNumber ? 'Room '+r.roomNumber : '-') + '</td>' +
+                  '<td>' + (r.checkInDate||'-') + '</td>' +
+                  '<td>' + (r.checkOutDate||'-') + '</td>' +
+                  '<td style="text-align:center;">' + nights + '</td>' +
+                  '<td style="font-weight:600;">$' + total.toFixed(2) + '</td>' +
+                  '<td>' + statusHtml + '</td>' +
+                  '<td style="color:var(--muted);font-size:12px;">' + (r.notes||'') + '</td>' +
+                '</tr>'
+            );
+        });
+    }
+
+    function printReport() {
+        const prev = document.title;
+        document.title = 'OceanView Resort - Report';
+        document.body.classList.add('print-report');
+        window.print();
+        document.body.classList.remove('print-report');
+        document.title = prev;
     }
 
     function printBill(id) {

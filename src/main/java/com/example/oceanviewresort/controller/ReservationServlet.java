@@ -91,6 +91,8 @@ public class ReservationServlet extends HttpServlet {
             o.addProperty("roomId",        r.getRoomId());
             o.addProperty("guestName",     r.getGuestName() != null ? r.getGuestName() : "");
             o.addProperty("roomNumber",    r.getRoomNumber() != null ? r.getRoomNumber() : "");
+            o.addProperty("guestEmail",    r.getGuestEmail() != null ? r.getGuestEmail() : "");
+            o.addProperty("guestPhone",    r.getGuestPhone() != null ? r.getGuestPhone() : "");
             o.addProperty("checkInDate",   r.getCheckInDate()  != null ? r.getCheckInDate().toString()  : "");
             o.addProperty("checkOutDate",  r.getCheckOutDate() != null ? r.getCheckOutDate().toString() : "");
             o.addProperty("totalPrice",    r.getTotalPrice() != null ? r.getTotalPrice().toPlainString() : "0");

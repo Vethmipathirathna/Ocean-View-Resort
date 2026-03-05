@@ -60,6 +60,7 @@ public class ReservationDAO {
         String sql = "SELECT rv.id, rv.guest_id, rv.room_id, rv.check_in_date, rv.check_out_date, " +
                      "rv.total_price, rv.status, rv.notes, rv.created_at, " +
                      "CONCAT(g.first_name,' ',g.last_name) AS guest_name, " +
+                     "g.email AS guest_email, g.phone AS guest_phone, " +
                      "rm.room_number " +
                      "FROM reservations rv " +
                      "JOIN guests g  ON rv.guest_id = g.id " +
@@ -143,6 +144,8 @@ public class ReservationDAO {
 
         r.setGuestName(rs.getString("guest_name"));
         r.setRoomNumber(rs.getString("room_number"));
+        r.setGuestEmail(rs.getString("guest_email"));
+        r.setGuestPhone(rs.getString("guest_phone"));
         return r;
     }
 }
