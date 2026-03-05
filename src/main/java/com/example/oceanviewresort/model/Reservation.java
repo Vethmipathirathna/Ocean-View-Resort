@@ -23,6 +23,8 @@ public class Reservation {
     // ---- Display-only fields populated by JOIN (not stored in DB) ----
     private String guestName;
     private String roomNumber;
+    private String guestEmail;
+    private String guestPhone;
 
     // ---- Constructors ----
     public Reservation() {}
@@ -61,4 +63,10 @@ public class Reservation {
 
     public String getRoomNumber() { return roomNumber; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+
+    public String getGuestEmail() { return guestEmail; }
+    public void setGuestEmail(String guestEmail) { this.guestEmail = guestEmail; }
+
+    public String getGuestPhone() { return guestPhone; }
+    public void setGuestPhone(String guestPhone) { this.guestPhone = guestPhone; }
 }

@@ -1,6 +1,7 @@
 package com.example.oceanviewresort.controller;
 
 import com.example.oceanviewresort.dao.ReservationDAO;
+import com.example.oceanviewresort.dao.RoomDAO;
 import com.example.oceanviewresort.model.Reservation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -32,6 +33,7 @@ import java.util.Map;
 public class ReservationServlet extends HttpServlet {
 
     private final ReservationDAO reservationDAO = new ReservationDAO();
+    private final RoomDAO roomDAO = new RoomDAO();
 
     private boolean isLoggedIn(HttpServletRequest req) {
         HttpSession s = req.getSession(false);
@@ -89,6 +91,8 @@ public class ReservationServlet extends HttpServlet {
             o.addProperty("roomId",        r.getRoomId());
             o.addProperty("guestName",     r.getGuestName() != null ? r.getGuestName() : "");
             o.addProperty("roomNumber",    r.getRoomNumber() != null ? r.getRoomNumber() : "");
+            o.addProperty("guestEmail",    r.getGuestEmail() != null ? r.getGuestEmail() : "");
+            o.addProperty("guestPhone",    r.getGuestPhone() != null ? r.getGuestPhone() : "");
             o.addProperty("checkInDate",   r.getCheckInDate()  != null ? r.getCheckInDate().toString()  : "");
             o.addProperty("checkOutDate",  r.getCheckOutDate() != null ? r.getCheckOutDate().toString() : "");
             o.addProperty("totalPrice",    r.getTotalPrice() != null ? r.getTotalPrice().toPlainString() : "0");
@@ -100,14 +104,21 @@ public class ReservationServlet extends HttpServlet {
         resp.getWriter().write(arr.toString());
     }
 
+    private boolean isAdminOrReceptionist(HttpServletRequest req) {
+        HttpSession s = req.getSession(false);
+        if (s == null) return false;
+        String role = (String) s.getAttribute("role");
+        return "admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role);
+    }
+
     // ---- POST: create reservation ----
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         json(resp);
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            resp.getWriter().write("{\"success\":false,\"message\":\"Admin only\"}");
+            resp.getWriter().write("{\"success\":false,\"message\":\"Access denied\"}");
             return;
         }
 
@@ -140,6 +151,7 @@ public class ReservationServlet extends HttpServlet {
 
             int newId = reservationDAO.createReservation(r);
             if (newId > 0) {
+                roomDAO.updateRoomStatus(r.getRoomId(), "occupied");
                 resp.getWriter().write("{\"success\":true,\"message\":\"Reservation created.\",\"id\":" + newId + "}");
             } else {
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -156,9 +168,9 @@ public class ReservationServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         json(resp);
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            resp.getWriter().write("{\"success\":false,\"message\":\"Admin only\"}");
+            resp.getWriter().write("{\"success\":false,\"message\":\"Access denied\"}");
             return;
         }
         Map<String, String> p = parseBody(req);
@@ -184,6 +196,14 @@ public class ReservationServlet extends HttpServlet {
             r.setStatus(status != null && !status.isBlank() ? status.trim() : "confirmed");
             r.setNotes(notes != null ? notes.trim() : null);
             boolean ok = reservationDAO.updateReservation(r);
+            if (ok) {
+                String newStatus = r.getStatus();
+                if ("checked_out".equals(newStatus) || "cancelled".equals(newStatus)) {
+                    roomDAO.updateRoomStatus(r.getRoomId(), "available");
+                } else {
+                    roomDAO.updateRoomStatus(r.getRoomId(), "occupied");
+                }
+            }
             resp.getWriter().write(ok
                 ? "{\"success\":true,\"message\":\"Reservation updated.\"}"
                 : "{\"success\":false,\"message\":\"Update failed.\"}");

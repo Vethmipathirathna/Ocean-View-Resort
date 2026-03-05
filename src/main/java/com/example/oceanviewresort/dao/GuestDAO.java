@@ -94,13 +94,30 @@ public class GuestDAO {
     }
 
     public boolean deleteGuest(int id) {
-        String sql = "DELETE FROM guests WHERE id=?";
-        try (Connection conn = DBConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+        try (Connection conn = DBConnection.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "DELETE FROM reservations WHERE guest_id=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "DELETE FROM guests WHERE id=?")) {
+                    ps.setInt(1, id);
+                    int rows = ps.executeUpdate();
+                    conn.commit();
+                    return rows > 0;
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                System.err.println("[GuestDAO] deleteGuest error: " + e.getMessage());
+                return false;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (SQLException e) {
-            System.err.println("[GuestDAO] deleteGuest error: " + e.getMessage());
+            System.err.println("[GuestDAO] deleteGuest connection error: " + e.getMessage());
             return false;
         }
     }

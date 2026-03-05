@@ -1,11 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
-    String role     = (String) session.getAttribute("role");
-    String fullName = (String) session.getAttribute("fullName");
-    if (role == null || !"receptionist".equalsIgnoreCase(role)) {
-        response.sendRedirect(request.getContextPath() + "/views/login.jsp");
-        return;
-    }
+    // Receptionists now use the unified dashboard
+    response.sendRedirect(request.getContextPath() + "/views/dashboard.jsp");
 %>
 <!DOCTYPE html>
 <html lang="en">
