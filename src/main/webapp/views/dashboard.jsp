@@ -355,6 +355,61 @@
             display: none; z-index: 9999; max-width: 320px;
             border-left: 3px solid var(--primary);
         }
+        /* ---- Bill / Invoice ---- */
+        #billOverlay {
+            position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;
+            display:none;align-items:center;justify-content:center;
+        }
+        #billOverlay.open { display:flex; }
+        #billBox {
+            background:#fff;width:420px;max-width:96vw;
+            border-radius:12px;overflow:hidden;
+            box-shadow:0 12px 40px rgba(0,0,0,.25);
+            font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;
+        }
+        #billHead {
+            background:#1d4ed8;color:#fff;
+            padding:22px 28px;text-align:center;
+        }
+        #billHead h2 { margin:0 0 2px;font-size:18px;font-weight:700; }
+        #billHead p  { margin:0;font-size:12px;opacity:.8; }
+        #billBody { padding:22px 28px; }
+        #billBody .b-row {
+            display:flex;justify-content:space-between;
+            padding:7px 0;border-bottom:1px solid #f1f5f9;
+            font-size:13.5px;
+        }
+        #billBody .b-row .b-lbl { color:#64748b; }
+        #billBody .b-row .b-val { font-weight:600;text-align:right; }
+        #billBody .b-total {
+            display:flex;justify-content:space-between;
+            padding:12px 0 0;margin-top:6px;
+            border-top:2px solid #1d4ed8;
+            font-size:16px;font-weight:800;color:#1d4ed8;
+        }
+        #billBody .b-notes {
+            margin-top:14px;font-size:12.5px;color:#64748b;
+            background:#f8fafc;border-radius:6px;padding:8px 12px;
+        }
+        #billActions {
+            display:flex;gap:10px;justify-content:flex-end;
+            padding:12px 16px;border-top:1px solid #e2e8f0;background:#f8fafc;
+        }
+        @media print {
+            body > *:not(#billOverlay) { display:none !important; }
+            #billOverlay { position:static !important;background:none !important;display:block !important; }
+            #billBox { box-shadow:none !important;border-radius:0 !important;width:100% !important; }
+            #billHead { padding:36px 48px !important; }
+            #billHead h2 { font-size:30px !important; }
+            #billHead p  { font-size:16px !important; }
+            #billBody { padding:36px 48px !important; }
+            #billBody .b-row { font-size:18px !important;padding:10px 0 !important; }
+            #billBody .b-total { font-size:24px !important;padding-top:16px !important; }
+            #billBody .b-notes { font-size:16px !important; }
+            #billBody #billDate { font-size:14px !important; }
+            #billActions { display:none !important; }
+            @page { size:A4;margin:1.5cm; }
+        }
     </style>
 </head>
 <body>
@@ -835,6 +890,31 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- Bill / Invoice -->
+<div id="billOverlay">
+    <div id="billBox">
+        <div id="billHead">
+            <h2>&#127754; OceanView Resort</h2>
+            <p>Reservation Invoice &nbsp;&bull;&nbsp; #<span id="billResId"></span></p>
+        </div>
+        <div id="billBody">
+            <div class="b-row"><span class="b-lbl">Guest</span><span class="b-val" id="billGuest"></span></div>
+            <div class="b-row"><span class="b-lbl">Room</span><span class="b-val" id="billRoom"></span></div>
+            <div class="b-row"><span class="b-lbl">Check-In</span><span class="b-val" id="billCheckIn"></span></div>
+            <div class="b-row"><span class="b-lbl">Check-Out</span><span class="b-val" id="billCheckOut"></span></div>
+            <div class="b-row"><span class="b-lbl">Nights</span><span class="b-val" id="billNights"></span></div>
+            <div class="b-row"><span class="b-lbl">Rate / Night</span><span class="b-val" id="billRate"></span></div>
+            <div class="b-total"><span>Total</span><span id="billTotal"></span></div>
+            <div class="b-notes" id="billNotesWrap"><strong>Notes:</strong> <span id="billNotes"></span></div>
+            <div style="text-align:center;margin-top:14px;font-size:11.5px;color:#94a3b8;" id="billDate"></div>
+        </div>
+        <div id="billActions">
+            <button class="btn-cancel" onclick="document.getElementById('billOverlay').classList.remove('open')">Close</button>
+            <button class="btn-save" onclick="var t=document.title;document.title='OceanView Resort - Invoice';window.print();document.title=t;">&#128438;&nbsp; Print</button>
+        </div>
+    </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
@@ -1368,6 +1448,7 @@
             const manageBtn = USER_ROLE === 'admin'
                 ? '<button class="btn-manage" onclick="openManageResModal(' + r.id + ')">Manage</button>'
                 : '';
+            const printBillBtn = '<button class="btn-manage" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;" onclick="printBill(' + r.id + ')">&#128438; Bill</button> ';
             const checkInBtn  = (USER_ROLE === 'admin' && (r.status === 'confirmed' || r.status === 'pending'))
                 ? '<button class="btn-manage" style="background:#dcfce7;color:#16a34a;border:1px solid #86efac;" onclick="quickStatusChange(' + r.id + ',\'checked_in\')">Check In</button> '
                 : '';
@@ -1388,7 +1469,7 @@
                 + '<td style="font-weight:600;">$' + parseFloat(r.totalPrice || 0).toFixed(2) + '</td>'
                 + '<td>' + badge + '</td>'
                 + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
-                + (USER_ROLE === 'admin' ? '<td>' + checkInBtn + checkOutBtn + cancelResBtn + manageBtn + '</td>' : '')
+                + (USER_ROLE === 'admin' ? '<td>' + checkInBtn + checkOutBtn + cancelResBtn + printBillBtn + manageBtn + '</td>' : '<td>' + printBillBtn + '</td>')
                 + '</tr>'
             );
         });
@@ -1545,9 +1626,27 @@
             data: { guestId, roomId, checkInDate: checkIn, checkOutDate: checkOut, totalPrice, status, notes },
             success: function(res) {
                 if (res.success) {
-                    showToast(res.message || 'Reservation created.');
                     closeReservationModal();
                     loadReservations();
+                    // Build and show bill
+                    const guestName = $('#gscName').text() || 'Guest';
+                    const $roomOpt  = $('#inputResRoom option:selected');
+                    const roomLabel = $roomOpt.text().split(' \u2014 ')[0].trim();
+                    const rate      = parseFloat($roomOpt.data('price')) || 0;
+                    const nights    = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+                    const total     = parseFloat(totalPrice) || (rate * nights);
+                    $('#billResId').text(res.id || '-');
+                    $('#billGuest').text(guestName);
+                    $('#billRoom').text(roomLabel);
+                    $('#billCheckIn').text(checkIn);
+                    $('#billCheckOut').text(checkOut);
+                    $('#billNights').text(nights);
+                    $('#billRate').text('$' + rate.toFixed(2));
+                    $('#billTotal').text('$' + total.toFixed(2));
+                    $('#billDate').text('Issued: ' + new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}));
+                    if (notes) { $('#billNotes').text(notes); $('#billNotesWrap').show(); }
+                    else        { $('#billNotesWrap').hide(); }
+                    $('#billOverlay').addClass('open');
                 } else {
                     showToast(res.message || 'Failed to create reservation.');
                 }
@@ -1643,6 +1742,31 @@
             },
             error: function() { showToast('Server error.'); }
         });
+    }
+
+    function printBill(id) {
+        const r = _allReservations.find(function(x){ return x.id === id; });
+        if (!r) { showToast('Reservation not found.'); return; }
+        const checkIn  = r.checkInDate  || '';
+        const checkOut = r.checkOutDate || '';
+        let nights = 1;
+        if (checkIn && checkOut) {
+            nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+        }
+        const rate  = nights > 0 ? (parseFloat(r.totalPrice || 0) / nights) : 0;
+        const total = parseFloat(r.totalPrice || 0);
+        $('#billResId').text(r.id);
+        $('#billGuest').text(r.guestName || '-');
+        $('#billRoom').text(r.roomNumber ? 'Room ' + r.roomNumber : '-');
+        $('#billCheckIn').text(checkIn);
+        $('#billCheckOut').text(checkOut);
+        $('#billNights').text(nights);
+        $('#billRate').text('$' + rate.toFixed(2));
+        $('#billTotal').text('$' + total.toFixed(2));
+        $('#billDate').text('Issued: ' + new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}));
+        if (r.notes) { $('#billNotes').text(r.notes); $('#billNotesWrap').show(); }
+        else          { $('#billNotesWrap').hide(); }
+        $('#billOverlay').addClass('open');
     }
 
     function saveReservationChanges() {
