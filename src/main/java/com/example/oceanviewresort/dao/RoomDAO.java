@@ -95,16 +95,46 @@ public class RoomDAO {
         }
     }
 
-    /** Deletes a room by id. Returns true on success. */
+    /** Deletes a room by id (cascades to reservations). Returns true on success. */
     public boolean deleteRoom(int id) {
-        String sql = "DELETE FROM rooms WHERE id=?";
+        try (Connection conn = DBConnection.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "DELETE FROM reservations WHERE room_id=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "DELETE FROM rooms WHERE id=?")) {
+                    ps.setInt(1, id);
+                    int rows = ps.executeUpdate();
+                    conn.commit();
+                    return rows > 0;
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                System.err.println("[RoomDAO] deleteRoom error: " + e.getMessage());
+                return false;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.err.println("[RoomDAO] deleteRoom connection error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Updates the status column of a room. */
+    public void updateRoomStatus(int id, String status) {
+        String sql = "UPDATE rooms SET status=? WHERE id=?";
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+            ps.setString(1, status);
+            ps.setInt(2, id);
+            ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("[RoomDAO] deleteRoom error: " + e.getMessage());
-            return false;
+            System.err.println("[RoomDAO] updateRoomStatus error: " + e.getMessage());
         }
     }
 

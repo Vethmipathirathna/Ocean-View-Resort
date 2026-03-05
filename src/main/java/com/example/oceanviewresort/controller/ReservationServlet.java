@@ -1,6 +1,7 @@
 package com.example.oceanviewresort.controller;
 
 import com.example.oceanviewresort.dao.ReservationDAO;
+import com.example.oceanviewresort.dao.RoomDAO;
 import com.example.oceanviewresort.model.Reservation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -32,6 +33,7 @@ import java.util.Map;
 public class ReservationServlet extends HttpServlet {
 
     private final ReservationDAO reservationDAO = new ReservationDAO();
+    private final RoomDAO roomDAO = new RoomDAO();
 
     private boolean isLoggedIn(HttpServletRequest req) {
         HttpSession s = req.getSession(false);
@@ -140,6 +142,7 @@ public class ReservationServlet extends HttpServlet {
 
             int newId = reservationDAO.createReservation(r);
             if (newId > 0) {
+                roomDAO.updateRoomStatus(r.getRoomId(), "occupied");
                 resp.getWriter().write("{\"success\":true,\"message\":\"Reservation created.\",\"id\":" + newId + "}");
             } else {
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -184,6 +187,14 @@ public class ReservationServlet extends HttpServlet {
             r.setStatus(status != null && !status.isBlank() ? status.trim() : "confirmed");
             r.setNotes(notes != null ? notes.trim() : null);
             boolean ok = reservationDAO.updateReservation(r);
+            if (ok) {
+                String newStatus = r.getStatus();
+                if ("checked_out".equals(newStatus) || "cancelled".equals(newStatus)) {
+                    roomDAO.updateRoomStatus(r.getRoomId(), "available");
+                } else {
+                    roomDAO.updateRoomStatus(r.getRoomId(), "occupied");
+                }
+            }
             resp.getWriter().write(ok
                 ? "{\"success\":true,\"message\":\"Reservation updated.\"}"
                 : "{\"success\":false,\"message\":\"Update failed.\"}");

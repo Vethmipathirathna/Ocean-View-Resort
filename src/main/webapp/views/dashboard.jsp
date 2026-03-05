@@ -584,6 +584,7 @@
                         <th>Nights</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Created</th>
                         <% if ("admin".equalsIgnoreCase(role)) { %>
                         <th>Actions</th>
                         <% } %>
@@ -798,59 +799,37 @@
 
 <!-- Manage Reservation Modal -->
 <div class="overlay" id="manageResModalOverlay">
-    <div class="modal" style="width:560px;padding:0;overflow:hidden;">
-        <!-- Header bar -->
-        <div style="background:linear-gradient(135deg,#1e40af,#2563eb);padding:22px 28px 18px;border-radius:16px 16px 0 0;">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
-                <div>
-                    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.65);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Reservation Details</div>
-                    <h3 id="manageResTitle" style="font-size:17px;font-weight:700;color:#fff;margin:0;"></h3>
-                </div>
-                <button class="modal-close" onclick="closeManageResModal()" style="color:rgba(255,255,255,.7);font-size:22px;margin-top:2px;">&#215;</button>
-            </div>
-            <!-- Status badge row -->
-            <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
-                <span style="font-size:12px;color:rgba(255,255,255,.6);">Current status:</span>
-                <span id="manageResStatusBadge" style="font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;background:rgba(255,255,255,.2);color:#fff;"></span>
-            </div>
+    <div class="modal" style="width:500px;">
+        <div class="modal-hd">
+            <h3 id="manageResTitle">Manage Reservation</h3>
+            <button class="modal-close" onclick="closeManageResModal()">&#215;</button>
         </div>
-
-        <!-- Body -->
-        <div style="padding:24px 28px 0;">
-            <input type="hidden" id="manageResId">
-            <input type="hidden" id="manageResStatus">
-            <!-- Grid fields -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
-                <div class="fg" style="grid-column:1/-1;">
-                    <label>Room</label>
-                    <select id="manageResRoom" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;" onchange="recalcManageTotalPrice()">
-                    </select>
-                </div>
-                <div class="fg">
-                    <label>Check-In Date</label>
-                    <input type="date" id="manageResCheckIn" onchange="refreshManageResRooms()">
-                </div>
-                <div class="fg">
-                    <label>Check-Out Date</label>
-                    <input type="date" id="manageResCheckOut" onchange="refreshManageResRooms()">
-                </div>
+        <input type="hidden" id="manageResId">
+        <input type="hidden" id="manageResStatus">
+        <div class="fg" style="grid-column:1/-1;">
+            <label>Room</label>
+            <select id="manageResRoom" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;" onchange="recalcManageTotalPrice()">
+            </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+            <div class="fg">
+                <label>Check-In Date</label>
+                <input type="date" id="manageResCheckIn" onchange="refreshManageResRooms()">
             </div>
             <div class="fg">
-                <label>Notes</label>
-                <input type="text" id="manageResNotes" placeholder="Optional notes">
-            </div>
-
-            <!-- Quick action: Cancel only -->
-            <div id="manageResQuickActions" style="display:flex;gap:8px;margin-bottom:16px;">
-                <button id="btnManageCancelRes" style="flex:1;padding:9px 0;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:#fee2e2;color:#dc2626;" onclick="quickStatusChange($('#manageResId').val(),'cancelled')">&#10007; Cancel Reservation</button>
+                <label>Check-Out Date</label>
+                <input type="date" id="manageResCheckOut" onchange="refreshManageResRooms()">
             </div>
         </div>
-
-        <!-- Footer -->
-        <div style="padding:0 28px 24px;display:flex;gap:10px;justify-content:flex-end;align-items:center;border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
-            <button class="btn-cancel" onclick="closeManageResModal()">Close</button>
-            <button class="btn-save" onclick="deleteReservationFromModal()" style="background:var(--danger);">&#128465; Delete</button>
-            <button id="btnManageSaveChanges" class="btn-save" onclick="saveReservationChanges()">&#10003; Save Changes</button>
+        <div class="fg">
+            <label>Notes</label>
+            <input type="text" id="manageResNotes" placeholder="Optional notes">
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeManageResModal()">Cancel</button>
+            <button class="btn-save" onclick="deleteReservationFromModal()" style="background:var(--danger);">Delete</button>
+            <button id="btnManageCancelRes" class="btn-save" style="background:#dc2626;" onclick="quickStatusChange($('#manageResId').val(),'cancelled')">&#10007; Cancel Reservation</button>
+            <button class="btn-save" onclick="saveReservationChanges()">Save Changes</button>
         </div>
     </div>
 </div>
@@ -1374,6 +1353,7 @@
             const badge = '<span class="chip" style="' + style + '">' + escHtml(rawStatus) + '</span>';
             const checkIn  = r.checkInDate  || '';
             const checkOut = r.checkOutDate || '';
+            const created  = r.createdAt ? r.createdAt.substring(0,10) : '';
             // Highlight today's check-ins / check-outs
             const today = localDate(new Date());
             let rowStyle = '';
@@ -1385,7 +1365,7 @@
                 nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
             }
             // Manage button (admin only)
-            const manageBtn = (USER_ROLE === 'admin' && r.status !== 'checked_out' && r.status !== 'cancelled')
+            const manageBtn = USER_ROLE === 'admin'
                 ? '<button class="btn-manage" onclick="openManageResModal(' + r.id + ')">Manage</button>'
                 : '';
             const checkInBtn  = (USER_ROLE === 'admin' && (r.status === 'confirmed' || r.status === 'pending'))
@@ -1407,6 +1387,7 @@
                 + '<td style="text-align:center;color:var(--muted);">' + (nights || '—') + '</td>'
                 + '<td style="font-weight:600;">$' + parseFloat(r.totalPrice || 0).toFixed(2) + '</td>'
                 + '<td>' + badge + '</td>'
+                + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
                 + (USER_ROLE === 'admin' ? '<td>' + checkInBtn + checkOutBtn + cancelResBtn + manageBtn + '</td>' : '')
                 + '</tr>'
             );
@@ -1585,27 +1566,12 @@
         _manageResCurrentId     = r.id;
         _manageResCurrentRoomId = r.roomId;
         $('#manageResId').val(r.id);
-        $('#manageResGuest').val(r.guestName || '');
+        $('#manageResStatus').val(r.status || 'confirmed');
         $('#manageResCheckIn').val(r.checkInDate || '');
         $('#manageResCheckOut').val(r.checkOutDate || '');
-        $('#manageResTotalPrice').val(r.totalPrice || '');
-        $('#manageResStatus').val(r.status || 'confirmed');
         $('#manageResNotes').val(r.notes || '');
-        $('#manageResTitle').text((r.guestName || '') + '  —  Room ' + (r.roomNumber || ''));
-        // Status badge in header
-        const badgeColors = { confirmed:'#2563eb', checked_in:'#16a34a', checked_out:'#0369a1', cancelled:'#dc2626', pending:'#d97706' };
-        const badgeLabel  = { confirmed:'Confirmed', checked_in:'Checked In', checked_out:'Checked Out', cancelled:'Cancelled', pending:'Pending' };
-        $('#manageResStatusBadge')
-            .text(badgeLabel[r.status] || r.status)
-            .css('background', (badgeColors[r.status] || '#64748b') + '55')
-            .css('color', '#fff');
-        // Show/hide quick action buttons based on current status
-        const isClosed = (r.status === 'checked_out' || r.status === 'cancelled');
-        $('#btnManageCancelRes').toggle(!isClosed);
-        $('#btnManageSaveChanges').toggle(!isClosed);
-        $('#manageResQuickActions').toggle(!isClosed);
-        $('#manageResRoom, #manageResCheckIn, #manageResCheckOut, #manageResNotes')
-            .prop('disabled', isClosed);
+        $('#manageResTitle').text('Manage Reservation \u2014 ' + (r.guestName || '') + ' / Room ' + (r.roomNumber || ''));
+        $('#btnManageCancelRes').toggle(r.status !== 'cancelled' && r.status !== 'checked_out');
         refreshManageResRooms(); // loads rooms available for the reservation's dates
         $('#manageResModalOverlay').addClass('open');
     }
@@ -1637,9 +1603,8 @@
         const checkOut = $('#manageResCheckOut').val();
         if (price > 0 && checkIn && checkOut) {
             const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
-            return (price * nights).toFixed(2);
+            $('#manageResTotalPrice').val((price * nights).toFixed(2));
         }
-        return '0.00';
     }
 
     function closeManageResModal() { $('#manageResModalOverlay').removeClass('open'); }
@@ -1681,17 +1646,19 @@
     }
 
     function saveReservationChanges() {
-        const id         = $('#manageResId').val();
-        const roomId     = $('#manageResRoom').val();
-        const checkIn    = $('#manageResCheckIn').val();
-        const checkOut   = $('#manageResCheckOut').val();
-        const totalPrice = recalcManageTotalPrice();
-        const status     = $('#manageResStatus').val();
-        const notes      = $('#manageResNotes').val().trim();
+        const id       = $('#manageResId').val();
+        const roomId   = $('#manageResRoom').val();
+        const checkIn  = $('#manageResCheckIn').val();
+        const checkOut = $('#manageResCheckOut').val();
+        const status   = $('#manageResStatus').val();
+        const notes    = $('#manageResNotes').val().trim();
         if (!roomId)   { showToast('Please select a room.');        return; }
         if (!checkIn)  { showToast('Check-in date is required.');   return; }
         if (!checkOut) { showToast('Check-out date is required.');  return; }
         if (new Date(checkOut) <= new Date(checkIn)) { showToast('Check-out must be after check-in.'); return; }
+        const price = parseFloat($('#manageResRoom option:selected').data('price')) || 0;
+        const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+        const totalPrice = (price * nights).toFixed(2);
         $.ajax({
             url: CTX + '/api/reservation', type: 'PUT',
             data: { id, roomId, checkInDate: checkIn, checkOutDate: checkOut, totalPrice, status, notes },
