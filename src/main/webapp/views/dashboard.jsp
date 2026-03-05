@@ -125,47 +125,136 @@
         .page { padding: 28px 32px; }
 
         /* ===== STAT CARDS ===== */
+        /* ===== WELCOME BANNER ===== */
+        .dash-welcome {
+            background: linear-gradient(135deg, #062d5f 0%, #0a4d8c 50%, #1178c8 100%);
+            border-radius: 18px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 8px 32px rgba(6,45,95,.25);
+            position: relative; overflow: hidden;
+        }
+        .dash-welcome::before {
+            content: '';
+            position: absolute; top: -40px; right: -40px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.06);
+        }
+        .dash-welcome::after {
+            content: '';
+            position: absolute; bottom: -60px; right: 120px;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.04);
+        }
+        .dash-welcome-left { position: relative; z-index: 1; }
+        .dash-welcome-greeting { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+        .dash-welcome-sub { font-size: 13px; color: rgba(255,255,255,.75); display: flex; align-items: center; gap: 10px; }
+        .dash-role-badge {
+            background: rgba(255,255,255,.15); color: #fff;
+            border-radius: 20px; padding: 3px 12px; font-size: 11px;
+            font-weight: 600; text-transform: capitalize; letter-spacing: .3px;
+            border: 1px solid rgba(255,255,255,.2);
+        }
+        .dash-welcome-right { position: relative; z-index: 1; text-align: right; }
+        .dash-date-big { font-size: 15px; font-weight: 600; color: #fff; }
+        .dash-time-big { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.1; }
+        .dash-metric-hint { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 2px; }
+
+        /* ===== STAT CARDS ===== */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(210px,1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
             gap: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
         .stat {
             background: var(--card);
-            border-radius: 14px;
-            padding: 22px 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.06);
-            display: flex; align-items: center; gap: 16px;
+            border-radius: 16px;
+            padding: 22px 22px 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            display: flex; flex-direction: column; gap: 14px;
+            border-top: 3px solid transparent;
+            transition: transform .15s, box-shadow .15s;
+            position: relative; overflow: hidden;
         }
+        .stat:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+        .stat-top { display: flex; align-items: center; justify-content: space-between; }
         .stat-icon {
-            width: 48px; height: 48px; border-radius: 12px;
+            width: 48px; height: 48px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
             font-size: 22px; flex-shrink: 0;
         }
-        .si-blue   { background: #dbeafe; }
-        .si-green  { background: #dcfce7; }
-        .si-amber  { background: #fef3c7; }
-        .si-purple { background: #f3e8ff; }
-        .stat-info .s-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 3px; }
-        .stat-info .s-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
-        .stat-info .s-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+        .si-blue   { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+        .si-green  { background: linear-gradient(135deg,#22c55e,#15803d); }
+        .si-amber  { background: linear-gradient(135deg,#f59e0b,#b45309); }
+        .si-purple { background: linear-gradient(135deg,#a855f7,#7e22ce); }
+        .si-rose   { background: linear-gradient(135deg,#f43f5e,#be123c); }
+        .stat-badge {
+            font-size: 11px; font-weight: 600; padding: 3px 9px;
+            border-radius: 20px;
+        }
+        .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+        .badge-green  { background: #dcfce7; color: #15803d; }
+        .badge-amber  { background: #fef3c7; color: #92400e; }
+        .badge-purple { background: #f3e8ff; color: #7e22ce; }
+        .badge-rose   { background: #ffe4e6; color: #be123c; }
+        .stat-info .s-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+        .stat-info .s-value { font-size: 32px; font-weight: 800; color: var(--text); line-height: 1; }
+        .stat-info .s-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
+        .stat-divider { height: 1px; background: var(--border); }
 
         /* ===== QUICK ACTIONS ===== */
         .section-hd { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px; margin-top: 4px; }
         .actions-row {
-            display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+            gap: 14px; margin-bottom: 32px;
         }
         .act-btn {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 11px; padding: 14px 20px;
-            display: flex; align-items: center; gap: 10px;
-            cursor: pointer; transition: all .15s; font-size: 13px;
+            background: var(--card); border: 1.5px solid var(--border);
+            border-radius: 14px; padding: 18px 16px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            cursor: pointer; transition: all .17s; font-size: 13px;
             font-weight: 600; color: var(--text);
-            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
         }
-        .act-btn:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; transform: translateY(-1px); }
-        .act-btn .ai { font-size: 18px; }
+        .act-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+        .act-btn .ai { font-size: 26px; }
+        .act-btn.ab-blue:hover   { border-color: #3b82f6; color: #1d4ed8; background: #eff6ff; }
+        .act-btn.ab-green:hover  { border-color: #22c55e; color: #15803d; background: #f0fdf4; }
+        .act-btn.ab-amber:hover  { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+        .act-btn.ab-purple:hover { border-color: #a855f7; color: #7e22ce; background: #faf5ff; }
+        .act-btn.ab-rose:hover   { border-color: #f43f5e; color: #be123c; background: #fff1f2; }
+
+        /* ===== RECENT ACTIVITY ===== */
+        .dash-panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+        .dash-panel-hd {
+            padding: 18px 22px 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+        .dash-panel-hd h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; }
+        .dash-panel-hd a  { font-size: 12px; color: var(--primary); font-weight: 600; text-decoration: none; }
+        .dash-panel-hd a:hover { text-decoration: underline; }
+        .dash-mini-table { width: 100%; border-collapse: collapse; }
+        .dash-mini-table th {
+            font-size: 11px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .5px;
+            padding: 10px 22px; background: #f8fafc; border-bottom: 1px solid var(--border);
+        }
+        .dash-mini-table td { padding: 13px 22px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+        .dash-mini-table tr:last-child td { border-bottom: none; }
+        .dash-mini-table tr:hover td { background: #f8fbff; }
+        .dash-empty-row td { text-align: center; color: var(--muted); padding: 28px !important; font-size: 13px; }
 
         /* ===== RECEPTIONIST TABLE ===== */
         .panel {
@@ -548,7 +637,7 @@
         <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
         <a class="nav-item" data-page="reports" href="#" onclick="showPage('reports');return false;"><span class="ni">&#128203;</span> Reports</a>
         <% } %>
-        <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
+        <a class="nav-item" data-page="help" href="#" onclick="showPage('help');return false;"><span class="ni">&#10067;</span> Help</a>
     </nav>
 
     <div class="sidebar-footer">
@@ -578,38 +667,72 @@
     <!-- ===== VIEW: DASHBOARD ===== -->
     <div id="page-dashboard">
 
-        <!-- Stat Cards -->
+        <!-- Welcome Banner -->
+        <div class="dash-welcome">
+            <div class="dash-welcome-left">
+                <div class="dash-welcome-greeting">Welcome back, <%= displayName %>! &#127754;</div>
+                <div class="dash-welcome-sub">
+                    <span class="dash-role-badge"><%= role.substring(0,1).toUpperCase() + role.substring(1).toLowerCase() %></span>
+                    &nbsp;OceanView Resort &mdash; Management System
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Stat Cards -->
         <div class="stats-row">
-            <div class="stat" style="cursor:pointer" onclick="showPage('reservations')">
-                <div class="stat-icon si-blue">&#128716;</div>
+            <div class="stat" style="cursor:pointer;border-top-color:#3b82f6;" onclick="showPage('reservations')">
+                <div class="stat-top">
+                    <div class="stat-icon si-blue">&#128716;</div>
+                    <span class="stat-badge badge-blue">Bookings</span>
+                </div>
                 <div class="stat-info">
                     <div class="s-label">Total Reservations</div>
-                    <div class="s-value" id="statReservations">0</div>
-                    <div class="s-sub">All bookings</div>
+                    <div class="s-value" id="statReservations">—</div>
+                    <div class="s-sub">All active bookings</div>
                 </div>
             </div>
-            <div class="stat" style="cursor:pointer" onclick="showPage('rooms')">
-                <div class="stat-icon si-green">&#127968;</div>
+            <div class="stat" style="cursor:pointer;border-top-color:#22c55e;" onclick="showPage('rooms')">
+                <div class="stat-top">
+                    <div class="stat-icon si-green">&#127968;</div>
+                    <span class="stat-badge badge-green">Rooms</span>
+                </div>
                 <div class="stat-info">
                     <div class="s-label">Available Rooms</div>
-                    <div class="s-value" id="statRooms">0</div>
-                    <div class="s-sub">Available right now</div>
+                    <div class="s-value" id="statRooms">—</div>
+                    <div class="s-sub">Ready to book now</div>
                 </div>
             </div>
-            <div class="stat" style="cursor:pointer" onclick="showPage('reservations');setResFilter('today_in')">
-                <div class="stat-icon si-amber">&#128100;</div>
+            <div class="stat" style="cursor:pointer;border-top-color:#f59e0b;" onclick="showPage('reservations');setResFilter('today_in')">
+                <div class="stat-top">
+                    <div class="stat-icon si-amber">&#128100;</div>
+                    <span class="stat-badge badge-amber">Today</span>
+                </div>
                 <div class="stat-info">
                     <div class="s-label">Checked In Today</div>
-                    <div class="s-value" id="statCheckInsToday">0</div>
+                    <div class="s-value" id="statCheckInsToday">—</div>
                     <div class="s-sub" id="statCheckInsSub">Loading&hellip;</div>
                 </div>
             </div>
-            <div class="stat" style="cursor:pointer" onclick="showPage('guests')">
-                <div class="stat-icon si-purple">&#128106;</div>
+            <div class="stat" style="cursor:pointer;border-top-color:#f43f5e;" onclick="showPage('reservations');setResFilter('today_out')">
+                <div class="stat-top">
+                    <div class="stat-icon si-rose">&#128682;</div>
+                    <span class="stat-badge badge-rose">Today</span>
+                </div>
+                <div class="stat-info">
+                    <div class="s-label">Checked Out Today</div>
+                    <div class="s-value" id="statCheckOutsToday">—</div>
+                    <div class="s-sub" id="statCheckOutsSub">Loading&hellip;</div>
+                </div>
+            </div>
+            <div class="stat" style="cursor:pointer;border-top-color:#a855f7;" onclick="showPage('guests')">
+                <div class="stat-top">
+                    <div class="stat-icon si-purple">&#128106;</div>
+                    <span class="stat-badge badge-purple">Guests</span>
+                </div>
                 <div class="stat-info">
                     <div class="s-label">Registered Guests</div>
-                    <div class="s-value" id="statGuests">0</div>
-                    <div class="s-sub">Total registered</div>
+                    <div class="s-value" id="statGuests">—</div>
+                    <div class="s-sub">Total on record</div>
                 </div>
             </div>
         </div>
@@ -617,13 +740,45 @@
         <!-- Quick Actions -->
         <div class="section-hd">Quick Actions</div>
         <div class="actions-row">
-            <button class="act-btn" onclick="showPage('reservations')"><span class="ai">&#128716;</span> New Booking</button>
-            <button class="act-btn"><span class="ai">&#128100;</span> Guest Check-In</button>
-            <button class="act-btn"><span class="ai">&#127968;</span> Room Status</button>
+            <button class="act-btn ab-blue" onclick="showPage('reservations')">
+                <span class="ai">&#128716;</span> New Booking
+            </button>
+            <button class="act-btn ab-green" onclick="showPage('reservations');setResFilter('today_in')">
+                <span class="ai">&#9989;</span> Check-In
+            </button>
+            <button class="act-btn ab-amber" onclick="showPage('rooms')">
+                <span class="ai">&#127968;</span> Room Status
+            </button>
+            <button class="act-btn ab-purple" onclick="showPage('guests')">
+                <span class="ai">&#128100;</span> Manage Guests
+            </button>
             <% if ("admin".equalsIgnoreCase(role)) { %>
-            <button class="act-btn" onclick="showPage('reports')"><span class="ai">&#128203;</span> Reports</button>
+            <button class="act-btn ab-rose" onclick="showPage('reports')">
+                <span class="ai">&#128203;</span> Reports
+            </button>
             <% } %>
-            <button class="act-btn"><span class="ai">&#9881;</span> Settings</button>
+        </div>
+
+        <!-- Recent Reservations -->
+        <div class="dash-panel">
+            <div class="dash-panel-hd">
+                <h3>&#128337; Recent Reservations</h3>
+                <a href="#" onclick="showPage('reservations');return false;">View all &rarr;</a>
+            </div>
+            <table class="dash-mini-table">
+                <thead>
+                    <tr>
+                        <th>Guest</th>
+                        <th>Room</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="dashRecentBody">
+                    <tr class="dash-empty-row"><td colspan="5">Loading&hellip;</td></tr>
+                </tbody>
+            </table>
         </div>
 
     </div><!-- /#page-dashboard -->
@@ -906,6 +1061,118 @@
     </div><!-- /#page-reports -->
     <% } %>
 
+    <!-- ===== VIEW: HELP ===== -->
+    <div id="page-help" style="display:none;">
+        <div class="panel" style="max-width:860px;margin:0 auto;">
+            <div class="panel-header"><h2>&#10067; Help &amp; Guide</h2></div>
+            <div style="padding:24px 28px;">
+
+                <!-- Quick Start -->
+                <h3 style="color:var(--primary);margin-bottom:8px;">&#9654; Getting Started</h3>
+                <p style="color:#475569;margin-bottom:20px;">Use the left sidebar to navigate between sections. Your role determines which sections are available to you.</p>
+
+                <!-- FAQ accordion -->
+                <style>
+                    .help-section { border:1px solid #e2e8f0; border-radius:10px; margin-bottom:14px; overflow:hidden; }
+                    .help-section summary { padding:14px 18px; font-weight:600; color:#1e293b; cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; background:#f8fafc; }
+                    .help-section summary::-webkit-details-marker { display:none; }
+                    .help-section summary::before { content:'\002B'; font-size:18px; color:var(--primary); }
+                    .help-section[open] summary::before { content:'\2212'; }
+                    .help-section .help-body { padding:16px 20px; color:#475569; line-height:1.7; background:#fff; }
+                    .help-section .help-body ul { margin:8px 0 0 18px; }
+                    .help-section .help-body li { margin-bottom:6px; }
+                    .help-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; margin-left:6px; vertical-align:middle; }
+                    .hb-admin { background:#fef3c7; color:#92400e; }
+                    .hb-both  { background:#dcfce7; color:#166534; }
+                    .help-contact { background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:12px; padding:20px 24px; margin-top:24px; display:flex; gap:20px; flex-wrap:wrap; }
+                    .help-contact-item { display:flex; align-items:center; gap:10px; flex:1; min-width:200px; }
+                    .help-contact-icon { font-size:28px; }
+                </style>
+
+                <!-- Dashboard -->
+                <details class="help-section" open>
+                    <summary>&#128202; Dashboard Overview <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        The Dashboard shows live KPI cards for today&apos;s check-ins/check-outs, total rooms, occupied rooms, and active guests.
+                        <ul>
+                            <li><strong>Today&apos;s Check-ins</strong> – reservations with today&apos;s check-in date.</li>
+                            <li><strong>Today&apos;s Check-outs</strong> – reservations with today&apos;s check-out date.</li>
+                            <li><strong>Occupied Rooms</strong> – rooms currently marked <em>occupied</em>.</li>
+                            <li>Quick Action buttons let you jump directly to common tasks.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Bookings -->
+                <details class="help-section">
+                    <summary>&#128716; Bookings (Reservations) <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>New Booking</strong> – click <em>&quot;+ New Reservation&quot;</em>, search for a guest, pick a room and dates, then save.</li>
+                            <li><strong>Check In</strong> – click the green <em>Check In</em> button on a confirmed/pending reservation.</li>
+                            <li><strong>Check Out</strong> – click the blue <em>Check Out</em> button on a checked-in reservation.</li>
+                            <li><strong>Cancel</strong> – click the red <em>Cancel</em> button on any active reservation.</li>
+                            <li><strong>Manage</strong> – edit room assignment, dates, price, and notes for any reservation.</li>
+                            <li><strong>Bill</strong> – click <em>&#128438; Bill</em> to preview and print the guest invoice.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Guests -->
+                <details class="help-section">
+                    <summary>&#128100; Guest Management <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>Register Guest</strong> – fill in first name, last name, email, phone, address and ID type.</li>
+                            <li><strong>Edit</strong> – click the pencil icon on any guest row to update their details.</li>
+                            <li><strong>Delete</strong> – click the trash icon; all reservations for that guest are removed first.</li>
+                            <li>Use the search box to find guests by name, ID, phone, or email.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Rooms -->
+                <details class="help-section">
+                    <summary>&#127968; Room Management <span class="help-badge hb-admin">Admin only</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>Add Room</strong> – specify room number, type, floor, capacity, price, and status.</li>
+                            <li><strong>Edit / Delete</strong> – use the action buttons in each room row.</li>
+                            <li>Room status (<em>available / occupied / maintenance</em>) syncs automatically with check-in and check-out actions.</li>
+                            <li>The <em>Availability</em> cards at the top give a real-time count by status.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Reports -->
+                <details class="help-section">
+                    <summary>&#128203; Reports &amp; History <span class="help-badge hb-both">Admin &amp; Receptionist</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li>KPI cards show totals for the selected date range: revenue, reservations, check-ins, and check-outs.</li>
+                            <li>The bar chart visualises monthly reservation counts for the current year.</li>
+                            <li>Use the <strong>Filter</strong> fields to narrow results by date range, status, or guest details (name / ID / phone / email).</li>
+                            <li>Click <strong>&#128438; Print Report</strong> to send the filtered table to the printer.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Receptionists -->
+                <details class="help-section">
+                    <summary>&#128101; Receptionist Management <span class="help-badge hb-admin">Admin only</span></summary>
+                    <div class="help-body">
+                        <ul>
+                            <li><strong>Add Receptionist</strong> – enter username, full name, email, and a secure password.</li>
+                            <li><strong>Edit / Delete</strong> – manage existing receptionist accounts from this page.</li>
+                        </ul>
+                    </div>
+                </details>
+
+
+            </div>
+        </div>
+    </div><!-- /#page-help -->
+
     </div><!-- /.page -->
 </div><!-- /.main-wrap -->
 
@@ -1186,12 +1453,12 @@
     // Date in topbar
     (function(){
         const d = new Date();
-        const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
-        document.getElementById('currentDate').textContent = d.toLocaleDateString('en-US', opts);
+        const dateOpts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+        document.getElementById('currentDate').textContent = d.toLocaleDateString('en-US', dateOpts);
     })();
 
     /* ---- Sidebar tab navigation ---- */
-    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management', reports: 'Reports & History' };
+    const PAGE_TITLES = { dashboard: 'Dashboard', receptionists: 'Receptionist Management', rooms: 'Room Management', guests: 'Guest Management', reservations: 'Reservation Management', reports: 'Reports & History', help: 'Help & Guide' };
 
     function showPage(name) {
         // Hide all page views
@@ -1339,11 +1606,12 @@
 
     $(document).ready(function() {
         showToast('Welcome back, <%= displayName %>!');
+        loadRoomsCount();
+        loadGuestsCount();
+        loadReservationsCount();
+        loadDashboardRecent();
         if (USER_ROLE === 'admin') {
             loadReceptionists();
-            loadRoomsCount();
-            loadGuestsCount();
-            loadReservationsCount();
         }
     });
 
@@ -1618,10 +1886,42 @@
             const arr = list || [];
             $('#statReservations').text(arr.length);
             const today = localDate(new Date());
-            const actuallyCheckedIn = arr.filter(r => r.checkInDate === today && r.status === 'checked_in').length;
-            const expectedToday     = arr.filter(r => r.checkInDate === today && r.status !== 'cancelled').length;
+            const actuallyCheckedIn  = arr.filter(r => r.checkInDate  === today && r.status === 'checked_in').length;
+            const expectedTodayIn    = arr.filter(r => r.checkInDate  === today && r.status !== 'cancelled').length;
+            const actuallyCheckedOut = arr.filter(r => r.checkOutDate === today && r.status === 'checked_out').length;
+            const expectedTodayOut   = arr.filter(r => r.checkOutDate === today && r.status !== 'cancelled').length;
             $('#statCheckInsToday').text(actuallyCheckedIn);
-            $('#statCheckInsSub').text(actuallyCheckedIn + ' of ' + expectedToday + ' arrived today');
+            $('#statCheckInsSub').text(actuallyCheckedIn + ' of ' + expectedTodayIn + ' arrived today');
+            $('#statCheckOutsToday').text(actuallyCheckedOut);
+            $('#statCheckOutsSub').text(actuallyCheckedOut + ' of ' + expectedTodayOut + ' departing today');
+        });
+    }
+
+    function loadDashboardRecent() {
+        $.getJSON(CTX + '/api/reservation', function(list) {
+            const arr = (list || []).slice(0, 6);
+            const tbody = $('#dashRecentBody');
+            tbody.empty();
+            if (arr.length === 0) {
+                tbody.append('<tr class="dash-empty-row"><td colspan="5">No reservations found.</td></tr>');
+                return;
+            }
+            arr.forEach(function(r) {
+                const statusStyle = RES_STATUS_STYLES[r.status] || '';
+                const statusLabel = r.status ? r.status.replace('_', ' ') : '';
+                tbody.append(
+                    '<tr>' +
+                    '<td><strong>' + $('<div>').text(r.guestName || 'Guest').html() + '</strong></td>' +
+                    '<td>' + $('<div>').text(r.roomNumber || '—').html() + '</td>' +
+                    '<td>' + $('<div>').text(r.checkInDate || '—').html() + '</td>' +
+                    '<td>' + $('<div>').text(r.checkOutDate || '—').html() + '</td>' +
+                    '<td><span style="' + statusStyle + 'border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">' +
+                        $('<div>').text(statusLabel).html() + '</span></td>' +
+                    '</tr>'
+                );
+            });
+        }).fail(function() {
+            $('#dashRecentBody').html('<tr class="dash-empty-row"><td colspan="5">Could not load recent reservations.</td></tr>');
         });
     }
 
@@ -1629,12 +1929,16 @@
         $.getJSON(CTX + '/api/reservation', function(list) {
             _allReservations = list || [];
             $('#statReservations').text(_allReservations.length);
-            // Today's check-ins stat
+            // Today's check-ins / check-outs stats
             const today = localDate(new Date());
-            const actuallyCheckedIn = _allReservations.filter(r => r.checkInDate === today && r.status === 'checked_in').length;
-            const expectedToday     = _allReservations.filter(r => r.checkInDate === today && r.status !== 'cancelled').length;
+            const actuallyCheckedIn  = _allReservations.filter(r => r.checkInDate  === today && r.status === 'checked_in').length;
+            const expectedTodayIn    = _allReservations.filter(r => r.checkInDate  === today && r.status !== 'cancelled').length;
+            const actuallyCheckedOut = _allReservations.filter(r => r.checkOutDate === today && r.status === 'checked_out').length;
+            const expectedTodayOut   = _allReservations.filter(r => r.checkOutDate === today && r.status !== 'cancelled').length;
             $('#statCheckInsToday').text(actuallyCheckedIn);
-            $('#statCheckInsSub').text(actuallyCheckedIn + ' of ' + expectedToday + ' arrived today');
+            $('#statCheckInsSub').text(actuallyCheckedIn + ' of ' + expectedTodayIn + ' arrived today');
+            $('#statCheckOutsToday').text(actuallyCheckedOut);
+            $('#statCheckOutsSub').text(actuallyCheckedOut + ' of ' + expectedTodayOut + ' departing today');
             _updateFilterCounts();
             applyReservationFilter(_activeResFilter);
             loadRoomsCount(); // refresh available-room count after reservation changes
