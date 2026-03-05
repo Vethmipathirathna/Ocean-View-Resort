@@ -44,6 +44,13 @@ public class GuestServlet extends HttpServlet {
         return "admin".equalsIgnoreCase(role);
     }
 
+    private boolean isAdminOrReceptionist(HttpServletRequest req) {
+        HttpSession s = req.getSession(false);
+        if (s == null) return false;
+        String role = (String) s.getAttribute("role");
+        return "admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role);
+    }
+
     private Map<String, String> parseBody(HttpServletRequest req) throws IOException {
         Map<String, String> params = new HashMap<>();
         StringBuilder sb = new StringBuilder();
@@ -102,9 +109,9 @@ public class GuestServlet extends HttpServlet {
             throws ServletException, IOException {
         json(resp);
         PrintWriter out = resp.getWriter();
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            out.write("{\"success\":false,\"message\":\"Admin access required.\"}");
+            out.write("{\"success\":false,\"message\":\"Access denied.\"}" );
             return;
         }
         String firstName = req.getParameter("firstName");
@@ -136,9 +143,9 @@ public class GuestServlet extends HttpServlet {
             throws ServletException, IOException {
         json(resp);
         PrintWriter out = resp.getWriter();
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            out.write("{\"success\":false,\"message\":\"Admin access required.\"}");
+            out.write("{\"success\":false,\"message\":\"Access denied.\"}");
             return;
         }
         Map<String, String> p = parseBody(req);
@@ -178,9 +185,9 @@ public class GuestServlet extends HttpServlet {
             throws ServletException, IOException {
         json(resp);
         PrintWriter out = resp.getWriter();
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            out.write("{\"success\":false,\"message\":\"Admin access required.\"}"); return;
+            out.write("{\"success\":false,\"message\":\"Access denied.\"}"); return;
         }
         Map<String, String> p = parseBody(req);
         String idStr = p.get("id");

@@ -535,6 +535,8 @@
         <a class="nav-item" data-page="receptionists" href="#" onclick="showPage('receptionists');return false;">
             <span class="ni">&#128101;</span> Receptionists
         </a>
+        <% } %>
+        <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
         <a class="nav-item" data-page="guests" href="#" onclick="showPage('guests');return false;">
             <span class="ni">&#128100;</span> Guests
         </a>
@@ -543,7 +545,7 @@
         <div class="nav-section-label" style="margin-top:12px;">Operations</div>
         <a class="nav-item" data-page="reservations" href="#" onclick="showPage('reservations');return false;"><span class="ni">&#128716;</span> Bookings</a>
         <a class="nav-item" data-page="rooms" href="#" onclick="showPage('rooms');return false;"><span class="ni">&#127968;</span> Rooms</a>
-        <% if ("admin".equalsIgnoreCase(role)) { %>
+        <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
         <a class="nav-item" data-page="reports" href="#" onclick="showPage('reports');return false;"><span class="ni">&#128203;</span> Reports</a>
         <% } %>
         <a class="nav-item" href="#"><span class="ni">&#9881;</span> Settings</a>
@@ -655,6 +657,43 @@
 
     <!-- ===== VIEW: ROOMS ===== -->
     <div id="page-rooms" style="display:none;">
+
+        <!-- Availability Summary Cards -->
+        <div class="stats-row" style="margin-bottom:20px;">
+            <div class="stat">
+                <div class="stat-icon si-blue">&#127968;</div>
+                <div class="stat-info">
+                    <div class="s-label">Total Rooms</div>
+                    <div class="s-value" id="roomStatTotal">0</div>
+                    <div class="s-sub">All rooms</div>
+                </div>
+            </div>
+            <div class="stat">
+                <div class="stat-icon si-green">&#9989;</div>
+                <div class="stat-info">
+                    <div class="s-label">Available</div>
+                    <div class="s-value" id="roomStatAvailable" style="color:#16a34a;">0</div>
+                    <div class="s-sub">Ready to book</div>
+                </div>
+            </div>
+            <div class="stat">
+                <div class="stat-icon si-amber">&#128716;</div>
+                <div class="stat-info">
+                    <div class="s-label">Occupied</div>
+                    <div class="s-value" id="roomStatOccupied" style="color:#d97706;">0</div>
+                    <div class="s-sub">Currently in use</div>
+                </div>
+            </div>
+            <div class="stat">
+                <div class="stat-icon" style="background:#fee2e2;">&#128295;</div>
+                <div class="stat-info">
+                    <div class="s-label">Maintenance</div>
+                    <div class="s-value" id="roomStatMaintenance" style="color:#dc2626;">0</div>
+                    <div class="s-sub">Under service</div>
+                </div>
+            </div>
+        </div>
+
         <div class="panel">
             <div class="panel-header">
                 <h2>All Rooms</h2>
@@ -684,7 +723,7 @@
     </div><!-- /#page-rooms -->
 
     <!-- ===== VIEW: GUESTS ===== -->
-    <% if ("admin".equalsIgnoreCase(role)) { %>
+    <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
     <div id="page-guests" style="display:none;">
         <div class="panel">
             <div class="panel-header">
@@ -716,7 +755,7 @@
         <div class="panel">
             <div class="panel-header">
                 <h2>Reservation Management</h2>
-                <% if ("admin".equalsIgnoreCase(role)) { %>
+                <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
                 <button class="btn-add-new" onclick="openNewReservationModal()">&#43; New Reservation</button>
                 <% } %>
             </div>
@@ -746,9 +785,7 @@
                         <th>Total</th>
                         <th>Status</th>
                         <th>Created</th>
-                        <% if ("admin".equalsIgnoreCase(role)) { %>
                         <th>Actions</th>
-                        <% } %>
                     </tr>
                 </thead>
                 <tbody id="reservationBody">
@@ -758,8 +795,8 @@
         </div>
     </div><!-- /#page-reservations -->
 
-    <!-- ===== VIEW: REPORTS (admin only) ===== -->
-    <% if ("admin".equalsIgnoreCase(role)) { %>
+    <!-- ===== VIEW: REPORTS ===== -->
+    <% if ("admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role)) { %>
     <div id="page-reports" style="display:none;">
 
         <!-- KPI Cards -->
@@ -1326,8 +1363,20 @@
             loadRoomsCount(); // use date-aware count
             if (!list || list.length === 0) {
                 tbody.append('<tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">No rooms found.</td></tr>');
+                $('#roomStatTotal').text(0);
+                $('#roomStatAvailable').text(0);
+                $('#roomStatOccupied').text(0);
+                $('#roomStatMaintenance').text(0);
                 return;
             }
+            // Availability summary
+            const avail = list.filter(function(r){ return r.status === 'available'; }).length;
+            const occup = list.filter(function(r){ return r.status === 'occupied'; }).length;
+            const maint = list.filter(function(r){ return r.status === 'maintenance'; }).length;
+            $('#roomStatTotal').text(list.length);
+            $('#roomStatAvailable').text(avail);
+            $('#roomStatOccupied').text(occup);
+            $('#roomStatMaintenance').text(maint);
             $.each(list, function(i, r) {
                 const statusColors = { available:'chip-active', occupied:'#fef3c7;color:#92400e', maintenance:'#fee2e2;color:#b91c1c' };
                 let badgeStyle = '';
@@ -1662,18 +1711,19 @@
             if (checkIn && checkOut) {
                 nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
             }
-            // Manage button (admin only)
-            const manageBtn = USER_ROLE === 'admin'
+            // Manage button (admin + receptionist)
+            const manageBtn = (USER_ROLE === 'admin' || USER_ROLE === 'receptionist')
                 ? '<button class="btn-manage" onclick="openManageResModal(' + r.id + ')">Manage</button>'
                 : '';
             const printBillBtn = '<button class="btn-manage" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;" onclick="printBill(' + r.id + ')">&#128438; Bill</button> ';
-            const checkInBtn  = (USER_ROLE === 'admin' && (r.status === 'confirmed' || r.status === 'pending'))
+            const isStaff = (USER_ROLE === 'admin' || USER_ROLE === 'receptionist');
+            const checkInBtn  = (isStaff && (r.status === 'confirmed' || r.status === 'pending'))
                 ? '<button class="btn-manage" style="background:#dcfce7;color:#16a34a;border:1px solid #86efac;" onclick="quickStatusChange(' + r.id + ',\'checked_in\')">Check In</button> '
                 : '';
-            const checkOutBtn = (USER_ROLE === 'admin' && r.status === 'checked_in')
+            const checkOutBtn = (isStaff && r.status === 'checked_in')
                 ? '<button class="btn-manage" style="background:#dbeafe;color:#0369a1;border:1px solid #93c5fd;" onclick="quickStatusChange(' + r.id + ',\'checked_out\')">Check Out</button> '
                 : '';
-            const cancelResBtn = (USER_ROLE === 'admin' && r.status !== 'cancelled' && r.status !== 'checked_out')
+            const cancelResBtn = (isStaff && r.status !== 'cancelled' && r.status !== 'checked_out')
                 ? '<button class="btn-manage" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="quickStatusChange(' + r.id + ',\'cancelled\')">Cancel</button> '
                 : '';
             tbody.append(
@@ -1687,7 +1737,7 @@
                 + '<td style="font-weight:600;">$' + parseFloat(r.totalPrice || 0).toFixed(2) + '</td>'
                 + '<td>' + badge + '</td>'
                 + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
-                + (USER_ROLE === 'admin' ? '<td>' + checkInBtn + checkOutBtn + cancelResBtn + printBillBtn + manageBtn + '</td>' : '<td>' + printBillBtn + '</td>')
+                + '<td>' + checkInBtn + checkOutBtn + cancelResBtn + printBillBtn + manageBtn + '</td>'
                 + '</tr>'
             );
         });

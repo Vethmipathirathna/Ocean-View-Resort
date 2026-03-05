@@ -56,7 +56,7 @@ public class LoginServlet extends HttpServlet {
             // Choose redirect page based on role
             String redirectPage;
             if ("receptionist".equalsIgnoreCase(user.getRole())) {
-                redirectPage = req.getContextPath() + "/views/receptionist-dashboard.jsp";
+                redirectPage = req.getContextPath() + "/views/dashboard.jsp";
             } else {
                 redirectPage = req.getContextPath() + "/views/dashboard.jsp";
             }

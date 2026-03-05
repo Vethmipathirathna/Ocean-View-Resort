@@ -104,14 +104,21 @@ public class ReservationServlet extends HttpServlet {
         resp.getWriter().write(arr.toString());
     }
 
+    private boolean isAdminOrReceptionist(HttpServletRequest req) {
+        HttpSession s = req.getSession(false);
+        if (s == null) return false;
+        String role = (String) s.getAttribute("role");
+        return "admin".equalsIgnoreCase(role) || "receptionist".equalsIgnoreCase(role);
+    }
+
     // ---- POST: create reservation ----
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         json(resp);
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            resp.getWriter().write("{\"success\":false,\"message\":\"Admin only\"}");
+            resp.getWriter().write("{\"success\":false,\"message\":\"Access denied\"}");
             return;
         }
 
@@ -161,9 +168,9 @@ public class ReservationServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         json(resp);
-        if (!isAdmin(req)) {
+        if (!isAdminOrReceptionist(req)) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            resp.getWriter().write("{\"success\":false,\"message\":\"Admin only\"}");
+            resp.getWriter().write("{\"success\":false,\"message\":\"Access denied\"}");
             return;
         }
         Map<String, String> p = parseBody(req);
