@@ -25,6 +25,8 @@ import java.util.Map;
  * REST API for reservation management.
  * GET  /api/reservation  -> list all reservations (JSON) — any logged-in user
  * POST /api/reservation  -> create reservation         — admin only
+ * PUT  /api/reservation  -> update reservation         — admin only
+ * DELETE /api/reservation -> delete reservation        — admin only
  */
 @WebServlet(name = "ReservationServlet", urlPatterns = "/api/reservation")
 public class ReservationServlet extends HttpServlet {
@@ -146,6 +148,75 @@ public class ReservationServlet extends HttpServlet {
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"success\":false,\"message\":\"Invalid input: " + e.getMessage() + "\"}");
+        }
+    }
+
+    // ---- PUT: update reservation ----
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        json(resp);
+        if (!isAdmin(req)) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            resp.getWriter().write("{\"success\":false,\"message\":\"Admin only\"}");
+            return;
+        }
+        Map<String, String> p = parseBody(req);
+        String idStr         = p.get("id");
+        String roomIdStr     = p.get("roomId");
+        String checkInStr    = p.get("checkInDate");
+        String checkOutStr   = p.get("checkOutDate");
+        String totalPriceStr = p.get("totalPrice");
+        String status        = p.get("status");
+        String notes         = p.get("notes");
+        if (idStr == null || idStr.isBlank()) {
+            resp.getWriter().write("{\"success\":false,\"message\":\"Reservation id is required.\"}");
+            return;
+        }
+        try {
+            Reservation r = new Reservation();
+            r.setId(Integer.parseInt(idStr.trim()));
+            if (roomIdStr != null && !roomIdStr.isBlank()) r.setRoomId(Integer.parseInt(roomIdStr.trim()));
+            r.setCheckInDate(LocalDate.parse(checkInStr.trim()));
+            r.setCheckOutDate(LocalDate.parse(checkOutStr.trim()));
+            r.setTotalPrice(totalPriceStr != null && !totalPriceStr.isBlank()
+                ? new BigDecimal(totalPriceStr.trim()) : BigDecimal.ZERO);
+            r.setStatus(status != null && !status.isBlank() ? status.trim() : "confirmed");
+            r.setNotes(notes != null ? notes.trim() : null);
+            boolean ok = reservationDAO.updateReservation(r);
+            resp.getWriter().write(ok
+                ? "{\"success\":true,\"message\":\"Reservation updated.\"}"
+                : "{\"success\":false,\"message\":\"Update failed.\"}");
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"success\":false,\"message\":\"Invalid input: " + e.getMessage() + "\"}");
+        }
+    }
+
+    // ---- DELETE: remove reservation ----
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        json(resp);
+        if (!isAdmin(req)) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            resp.getWriter().write("{\"success\":false,\"message\":\"Admin only\"}");
+            return;
+        }
+        Map<String, String> p = parseBody(req);
+        String idStr = p.get("id");
+        if (idStr == null || idStr.isBlank()) {
+            resp.getWriter().write("{\"success\":false,\"message\":\"Reservation id is required.\"}");
+            return;
+        }
+        try {
+            boolean ok = reservationDAO.deleteReservation(Integer.parseInt(idStr.trim()));
+            resp.getWriter().write(ok
+                ? "{\"success\":true,\"message\":\"Reservation deleted.\"}"
+                : "{\"success\":false,\"message\":\"Delete failed.\"}");
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"success\":false,\"message\":\"Invalid id.\"}");
         }
     }
 }

@@ -432,15 +432,15 @@
                 <div class="stat-info">
                     <div class="s-label">Available Rooms</div>
                     <div class="s-value" id="statRooms">0</div>
-                    <div class="s-sub">Total available</div>
+                    <div class="s-sub">Available right now</div>
                 </div>
             </div>
-            <div class="stat">
+            <div class="stat" style="cursor:pointer" onclick="showPage('reservations');setResFilter('today_in')">
                 <div class="stat-icon si-amber">&#128100;</div>
                 <div class="stat-info">
-                    <div class="s-label">Check-ins Today</div>
-                    <div class="s-value"></div>
-                    <div class="s-sub">Coming soon</div>
+                    <div class="s-label">Checked In Today</div>
+                    <div class="s-value" id="statCheckInsToday">0</div>
+                    <div class="s-sub" id="statCheckInsSub">Loading&hellip;</div>
                 </div>
             </div>
             <div class="stat" style="cursor:pointer" onclick="showPage('guests')">
@@ -584,11 +584,13 @@
                         <th>Nights</th>
                         <th>Total</th>
                         <th>Status</th>
-                        <th>Created</th>
+                        <% if ("admin".equalsIgnoreCase(role)) { %>
+                        <th>Actions</th>
+                        <% } %>
                     </tr>
                 </thead>
                 <tbody id="reservationBody">
-                    <tr><td colspan="9" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
+                    <tr><td colspan="10" style="text-align:center;padding:28px;color:#94a3b8;">Loading&hellip;</td></tr>
                 </tbody>
             </table>
         </div>
@@ -772,11 +774,11 @@
             </div>
             <div class="fg">
                 <label>Check-In Date</label>
-                <input type="date" id="inputResCheckIn" onchange="calcTotalPrice()">
+                <input type="date" id="inputResCheckIn" onchange="refreshNewResRooms()">
             </div>
             <div class="fg">
                 <label>Check-Out Date</label>
-                <input type="date" id="inputResCheckOut" onchange="calcTotalPrice()">
+                <input type="date" id="inputResCheckOut" onchange="refreshNewResRooms()">
             </div>
             <div class="fg">
                 <label>Total Price ($)</label>
@@ -794,12 +796,79 @@
     </div>
 </div>
 
+<!-- Manage Reservation Modal -->
+<div class="overlay" id="manageResModalOverlay">
+    <div class="modal" style="width:560px;padding:0;overflow:hidden;">
+        <!-- Header bar -->
+        <div style="background:linear-gradient(135deg,#1e40af,#2563eb);padding:22px 28px 18px;border-radius:16px 16px 0 0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+                <div>
+                    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.65);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Reservation Details</div>
+                    <h3 id="manageResTitle" style="font-size:17px;font-weight:700;color:#fff;margin:0;"></h3>
+                </div>
+                <button class="modal-close" onclick="closeManageResModal()" style="color:rgba(255,255,255,.7);font-size:22px;margin-top:2px;">&#215;</button>
+            </div>
+            <!-- Status badge row -->
+            <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:12px;color:rgba(255,255,255,.6);">Current status:</span>
+                <span id="manageResStatusBadge" style="font-size:12px;font-weight:700;padding:3px 12px;border-radius:20px;background:rgba(255,255,255,.2);color:#fff;"></span>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:24px 28px 0;">
+            <input type="hidden" id="manageResId">
+            <input type="hidden" id="manageResStatus">
+            <!-- Grid fields -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+                <div class="fg" style="grid-column:1/-1;">
+                    <label>Room</label>
+                    <select id="manageResRoom" style="width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:9px;font-size:14px;outline:none;font-family:inherit;" onchange="recalcManageTotalPrice()">
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Check-In Date</label>
+                    <input type="date" id="manageResCheckIn" onchange="refreshManageResRooms()">
+                </div>
+                <div class="fg">
+                    <label>Check-Out Date</label>
+                    <input type="date" id="manageResCheckOut" onchange="refreshManageResRooms()">
+                </div>
+            </div>
+            <div class="fg">
+                <label>Notes</label>
+                <input type="text" id="manageResNotes" placeholder="Optional notes">
+            </div>
+
+            <!-- Quick action: Cancel only -->
+            <div id="manageResQuickActions" style="display:flex;gap:8px;margin-bottom:16px;">
+                <button id="btnManageCancelRes" style="flex:1;padding:9px 0;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:#fee2e2;color:#dc2626;" onclick="quickStatusChange($('#manageResId').val(),'cancelled')">&#10007; Cancel Reservation</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:0 28px 24px;display:flex;gap:10px;justify-content:flex-end;align-items:center;border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+            <button class="btn-cancel" onclick="closeManageResModal()">Close</button>
+            <button class="btn-save" onclick="deleteReservationFromModal()" style="background:var(--danger);">&#128465; Delete</button>
+            <button id="btnManageSaveChanges" class="btn-save" onclick="saveReservationChanges()">&#10003; Save Changes</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
     const CTX = '${pageContext.request.contextPath}';
     const USER_ROLE = '<%= role %>'.toLowerCase();
+    $.ajaxSetup({ cache: false }); // always fetch fresh data, never use browser-cached GET responses
+
+    // Returns local date string YYYY-MM-DD (avoids UTC offset issues with toISOString)
+    function localDate(d) {
+        return d.getFullYear() + '-'
+            + String(d.getMonth() + 1).padStart(2, '0') + '-'
+            + String(d.getDate()).padStart(2, '0');
+    }
 
     // Date in topbar
     (function(){
@@ -956,19 +1025,20 @@
 
     $(document).ready(function() {
         showToast('Welcome back, <%= displayName %>!');
-        <% if ("admin".equalsIgnoreCase(role)) { %>
-        loadReceptionists();
-        loadRoomsCount();
-        loadGuestsCount();
-        loadReservationsCount();
-        <% } %>
+        if (USER_ROLE === 'admin') {
+            loadReceptionists();
+            loadRoomsCount();
+            loadGuestsCount();
+            loadReservationsCount();
+        }
     });
 
     /* ---- Room management ---- */
     function loadRoomsCount() {
-        $.getJSON(CTX + '/api/room', function(list) {
-            const available = list ? list.filter(r => r.status === 'available').length : 0;
-            $('#statRooms').text(available);
+        const today    = localDate(new Date());
+        const tomorrow = localDate(new Date(Date.now() + 86400000));
+        $.getJSON(CTX + '/api/room?checkIn=' + today + '&checkOut=' + tomorrow + '&excludeRes=-1', function(list) {
+            $('#statRooms').text(list ? list.length : 0);
         });
     }
 
@@ -976,8 +1046,7 @@
         $.getJSON(CTX + '/api/room', function(list) {
             const tbody = $('#roomBody');
             tbody.empty();
-            const available = list ? list.filter(r => r.status === 'available').length : 0;
-            $('#statRooms').text(available);
+            loadRoomsCount(); // use date-aware count
             if (!list || list.length === 0) {
                 tbody.append('<tr><td colspan="7" style="text-align:center;padding:28px;color:#94a3b8;">No rooms found.</td></tr>');
                 return;
@@ -1220,7 +1289,13 @@
 
     function loadReservationsCount() {
         $.getJSON(CTX + '/api/reservation', function(list) {
-            $('#statReservations').text(list ? list.length : 0);
+            const arr = list || [];
+            $('#statReservations').text(arr.length);
+            const today = localDate(new Date());
+            const actuallyCheckedIn = arr.filter(r => r.checkInDate === today && r.status === 'checked_in').length;
+            const expectedToday     = arr.filter(r => r.checkInDate === today && r.status !== 'cancelled').length;
+            $('#statCheckInsToday').text(actuallyCheckedIn);
+            $('#statCheckInsSub').text(actuallyCheckedIn + ' of ' + expectedToday + ' arrived today');
         });
     }
 
@@ -1228,19 +1303,26 @@
         $.getJSON(CTX + '/api/reservation', function(list) {
             _allReservations = list || [];
             $('#statReservations').text(_allReservations.length);
+            // Today's check-ins stat
+            const today = localDate(new Date());
+            const actuallyCheckedIn = _allReservations.filter(r => r.checkInDate === today && r.status === 'checked_in').length;
+            const expectedToday     = _allReservations.filter(r => r.checkInDate === today && r.status !== 'cancelled').length;
+            $('#statCheckInsToday').text(actuallyCheckedIn);
+            $('#statCheckInsSub').text(actuallyCheckedIn + ' of ' + expectedToday + ' arrived today');
             _updateFilterCounts();
             applyReservationFilter(_activeResFilter);
+            loadRoomsCount(); // refresh available-room count after reservation changes
         }).fail(function() {
             $('#reservationBody').html('<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--danger);">Failed to load reservations.</td></tr>');
         });
     }
 
     function _updateFilterCounts() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDate(new Date());
         const counts = {
             all:         _allReservations.length,
-            today_in:    _allReservations.filter(r => r.checkInDate  === today).length,
-            today_out:   _allReservations.filter(r => r.checkOutDate === today).length,
+            today_in:    _allReservations.filter(r => r.checkInDate  === today && r.status !== 'cancelled').length,
+            today_out:   _allReservations.filter(r => r.checkOutDate === today && r.status !== 'cancelled').length,
             upcoming:    _allReservations.filter(r => r.checkInDate > today && r.status !== 'cancelled').length,
             confirmed:   _allReservations.filter(r => r.status === 'confirmed').length,
             pending:     _allReservations.filter(r => r.status === 'pending').length,
@@ -1262,11 +1344,11 @@
     }
 
     function applyReservationFilter(name) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = localDate(new Date());
         let filtered;
         switch (name) {
-            case 'today_in':    filtered = _allReservations.filter(r => r.checkInDate  === today); break;
-            case 'today_out':   filtered = _allReservations.filter(r => r.checkOutDate === today); break;
+            case 'today_in':    filtered = _allReservations.filter(r => r.checkInDate  === today && r.status !== 'cancelled'); break;
+            case 'today_out':   filtered = _allReservations.filter(r => r.checkOutDate === today && r.status !== 'cancelled'); break;
             case 'upcoming':    filtered = _allReservations.filter(r => r.checkInDate > today && r.status !== 'cancelled'); break;
             case 'confirmed':   filtered = _allReservations.filter(r => r.status === 'confirmed');   break;
             case 'pending':     filtered = _allReservations.filter(r => r.status === 'pending');     break;
@@ -1292,9 +1374,8 @@
             const badge = '<span class="chip" style="' + style + '">' + escHtml(rawStatus) + '</span>';
             const checkIn  = r.checkInDate  || '';
             const checkOut = r.checkOutDate || '';
-            const created  = r.createdAt ? r.createdAt.substring(0,10) : '';
             // Highlight today's check-ins / check-outs
-            const today = new Date().toISOString().split('T')[0];
+            const today = localDate(new Date());
             let rowStyle = '';
             if (checkIn === today)  rowStyle = 'background:#f0fdf4;';
             if (checkOut === today) rowStyle = 'background:#fff7ed;';
@@ -1303,6 +1384,19 @@
             if (checkIn && checkOut) {
                 nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
             }
+            // Manage button (admin only)
+            const manageBtn = (USER_ROLE === 'admin' && r.status !== 'checked_out' && r.status !== 'cancelled')
+                ? '<button class="btn-manage" onclick="openManageResModal(' + r.id + ')">Manage</button>'
+                : '';
+            const checkInBtn  = (USER_ROLE === 'admin' && (r.status === 'confirmed' || r.status === 'pending'))
+                ? '<button class="btn-manage" style="background:#dcfce7;color:#16a34a;border:1px solid #86efac;" onclick="quickStatusChange(' + r.id + ',\'checked_in\')">Check In</button> '
+                : '';
+            const checkOutBtn = (USER_ROLE === 'admin' && r.status === 'checked_in')
+                ? '<button class="btn-manage" style="background:#dbeafe;color:#0369a1;border:1px solid #93c5fd;" onclick="quickStatusChange(' + r.id + ',\'checked_out\')">Check Out</button> '
+                : '';
+            const cancelResBtn = (USER_ROLE === 'admin' && r.status !== 'cancelled' && r.status !== 'checked_out')
+                ? '<button class="btn-manage" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="quickStatusChange(' + r.id + ',\'cancelled\')">Cancel</button> '
+                : '';
             tbody.append(
                 '<tr style="' + rowStyle + '">'
                 + '<td style="color:#94a3b8;font-size:12px;">' + (i+1) + '</td>'
@@ -1313,7 +1407,7 @@
                 + '<td style="text-align:center;color:var(--muted);">' + (nights || '—') + '</td>'
                 + '<td style="font-weight:600;">$' + parseFloat(r.totalPrice || 0).toFixed(2) + '</td>'
                 + '<td>' + badge + '</td>'
-                + '<td style="color:#94a3b8;font-size:12px;">' + escHtml(created) + '</td>'
+                + (USER_ROLE === 'admin' ? '<td>' + checkInBtn + checkOutBtn + cancelResBtn + manageBtn + '</td>' : '')
                 + '</tr>'
             );
         });
@@ -1326,25 +1420,14 @@
         $.getJSON(CTX + '/api/guest', function(guests) {
             _resGuestList = guests || [];
         });
-        // Populate available room dropdown
-        $.getJSON(CTX + '/api/room', function(rooms) {
-            const $sel = $('#inputResRoom').empty().append('<option value="" data-price="0">-- Select Room --</option>');
-            $.each(rooms || [], function(i, r) {
-                if (r.status === 'available') {
-                    $sel.append('<option value="' + r.id + '" data-price="' + r.pricePerNight + '">' +
-                        'Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') — $' + parseFloat(r.pricePerNight).toFixed(2) + '/night' +
-                        '</option>');
-                }
-            });
-        });
         // Set default dates (today and tomorrow)
         const today = new Date();
         const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
-        $('#inputResCheckIn').val(today.toISOString().split('T')[0]);
-        $('#inputResCheckOut').val(tomorrow.toISOString().split('T')[0]);
+        $('#inputResCheckIn').val(localDate(today));
+        $('#inputResCheckOut').val(localDate(tomorrow));
         $('#inputResTotalPrice').val('');
         $('#inputResNotes').val('');
-        calcTotalPrice();
+        refreshNewResRooms(); // loads rooms filtered by selected dates, then recalcs price
         $('#reservationModalOverlay').addClass('open');
         setTimeout(function(){ $('#inputGuestSearch').focus(); }, 150);
     }
@@ -1427,6 +1510,42 @@
         }
     }
 
+    // Re-fetches the room dropdown for the New Reservation modal based on selected dates.
+    function refreshNewResRooms() {
+        const checkIn  = $('#inputResCheckIn').val();
+        const checkOut = $('#inputResCheckOut').val();
+        const currentRoomId = parseInt($('#inputResRoom').val()) || 0;
+        if (!checkIn || !checkOut) {
+            // No dates yet — load all available rooms without date filter
+            $.getJSON(CTX + '/api/room', function(rooms) {
+                const $sel = $('#inputResRoom').empty()
+                    .append('<option value="" data-price="0">-- Select Room --</option>');
+                $.each(rooms || [], function(i, r) {
+                    if (r.status !== 'available') return;
+                    const $opt = $('<option>').val(r.id)
+                        .text('Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') \u2014 $' + parseFloat(r.pricePerNight).toFixed(2) + '/night')
+                        .attr('data-price', r.pricePerNight);
+                    if (r.id === currentRoomId) $opt.prop('selected', true);
+                    $sel.append($opt);
+                });
+                calcTotalPrice();
+            });
+            return;
+        }
+        $.getJSON(CTX + '/api/room?checkIn=' + checkIn + '&checkOut=' + checkOut + '&excludeRes=-1', function(rooms) {
+            const $sel = $('#inputResRoom').empty()
+                .append('<option value="" data-price="0">-- Select Room --</option>');
+            $.each(rooms || [], function(i, r) {
+                const $opt = $('<option>').val(r.id)
+                    .text('Room ' + escHtml(r.roomNumber) + ' (' + escHtml(r.type) + ') \u2014 $' + parseFloat(r.pricePerNight).toFixed(2) + '/night')
+                    .attr('data-price', r.pricePerNight);
+                if (r.id === currentRoomId) $opt.prop('selected', true);
+                $sel.append($opt);
+            });
+            calcTotalPrice();
+        });
+    }
+
     function saveReservation() {
         const guestId    = $('#inputResGuestId').val();
         const roomId     = $('#inputResRoom').val();
@@ -1450,6 +1569,159 @@
                     loadReservations();
                 } else {
                     showToast(res.message || 'Failed to create reservation.');
+                }
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    /* ---- Manage (edit/delete) reservation ---- */
+    let _manageResCurrentId     = 0;
+    let _manageResCurrentRoomId = 0;
+
+    function openManageResModal(id) {
+        const r = _allReservations.find(function(x){ return x.id === id; });
+        if (!r) { showToast('Reservation not found.'); return; }
+        _manageResCurrentId     = r.id;
+        _manageResCurrentRoomId = r.roomId;
+        $('#manageResId').val(r.id);
+        $('#manageResGuest').val(r.guestName || '');
+        $('#manageResCheckIn').val(r.checkInDate || '');
+        $('#manageResCheckOut').val(r.checkOutDate || '');
+        $('#manageResTotalPrice').val(r.totalPrice || '');
+        $('#manageResStatus').val(r.status || 'confirmed');
+        $('#manageResNotes').val(r.notes || '');
+        $('#manageResTitle').text((r.guestName || '') + '  —  Room ' + (r.roomNumber || ''));
+        // Status badge in header
+        const badgeColors = { confirmed:'#2563eb', checked_in:'#16a34a', checked_out:'#0369a1', cancelled:'#dc2626', pending:'#d97706' };
+        const badgeLabel  = { confirmed:'Confirmed', checked_in:'Checked In', checked_out:'Checked Out', cancelled:'Cancelled', pending:'Pending' };
+        $('#manageResStatusBadge')
+            .text(badgeLabel[r.status] || r.status)
+            .css('background', (badgeColors[r.status] || '#64748b') + '55')
+            .css('color', '#fff');
+        // Show/hide quick action buttons based on current status
+        const isClosed = (r.status === 'checked_out' || r.status === 'cancelled');
+        $('#btnManageCancelRes').toggle(!isClosed);
+        $('#btnManageSaveChanges').toggle(!isClosed);
+        $('#manageResQuickActions').toggle(!isClosed);
+        $('#manageResRoom, #manageResCheckIn, #manageResCheckOut, #manageResNotes')
+            .prop('disabled', isClosed);
+        refreshManageResRooms(); // loads rooms available for the reservation's dates
+        $('#manageResModalOverlay').addClass('open');
+    }
+
+    // Re-fetches the room dropdown for the Manage modal based on current date inputs.
+    function refreshManageResRooms() {
+        const checkIn  = $('#manageResCheckIn').val();
+        const checkOut = $('#manageResCheckOut').val();
+        if (!checkIn || !checkOut) return;
+        const prevRoomId = parseInt($('#manageResRoom').val()) || _manageResCurrentRoomId;
+        $.getJSON(CTX + '/api/room?checkIn=' + checkIn + '&checkOut=' + checkOut + '&excludeRes=' + _manageResCurrentId, function(rooms) {
+            const $sel = $('#manageResRoom').empty();
+            $.each(rooms || [], function(i, rm) {
+                const isCurrent = rm.id === _manageResCurrentRoomId;
+                const label = 'Room ' + escHtml(rm.roomNumber) + ' (' + escHtml(rm.type) + ')'
+                    + ' \u2014 $' + parseFloat(rm.pricePerNight).toFixed(2) + '/night'
+                    + (isCurrent ? ' [current]' : '');
+                const $opt = $('<option>').val(rm.id).text(label).attr('data-price', rm.pricePerNight);
+                if (rm.id === prevRoomId) $opt.prop('selected', true);
+                $sel.append($opt);
+            });
+            recalcManageTotalPrice();
+        });
+    }
+
+    function recalcManageTotalPrice() {
+        const price = parseFloat($('#manageResRoom option:selected').data('price')) || 0;
+        const checkIn  = $('#manageResCheckIn').val();
+        const checkOut = $('#manageResCheckOut').val();
+        if (price > 0 && checkIn && checkOut) {
+            const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000));
+            return (price * nights).toFixed(2);
+        }
+        return '0.00';
+    }
+
+    function closeManageResModal() { $('#manageResModalOverlay').removeClass('open'); }
+
+    // Quick Check In / Check Out / Cancel — changes only the status field
+    function quickStatusChange(id, newStatus) {
+        if (!id) return;
+        const r = _allReservations.find(function(x){ return x.id == id; });
+        if (!r) { showToast('Reservation not found.'); return; }
+        const labels = { checked_in: 'Check In', checked_out: 'Check Out', cancelled: 'Cancel Reservation' };
+        const label  = labels[newStatus] || newStatus;
+        const msg    = newStatus === 'cancelled'
+            ? 'Cancel reservation for ' + (r.guestName || 'Guest') + '? This cannot be undone.'
+            : 'Mark reservation for ' + (r.guestName || 'Guest') + ' as ' + label + '?';
+        if (!confirm(msg)) return;
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'PUT',
+            data: {
+                id:          r.id,
+                roomId:      r.roomId,
+                checkInDate:  r.checkInDate,
+                checkOutDate: r.checkOutDate,
+                totalPrice:  r.totalPrice,
+                status:      newStatus,
+                notes:       r.notes || ''
+            },
+            success: function(res) {
+                if (res.success) {
+                    const toastMsg = newStatus === 'cancelled' ? 'Reservation cancelled.' : label + ' successful.';
+                    showToast(toastMsg);
+                    closeManageResModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Update failed.');
+                }
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    function saveReservationChanges() {
+        const id         = $('#manageResId').val();
+        const roomId     = $('#manageResRoom').val();
+        const checkIn    = $('#manageResCheckIn').val();
+        const checkOut   = $('#manageResCheckOut').val();
+        const totalPrice = recalcManageTotalPrice();
+        const status     = $('#manageResStatus').val();
+        const notes      = $('#manageResNotes').val().trim();
+        if (!roomId)   { showToast('Please select a room.');        return; }
+        if (!checkIn)  { showToast('Check-in date is required.');   return; }
+        if (!checkOut) { showToast('Check-out date is required.');  return; }
+        if (new Date(checkOut) <= new Date(checkIn)) { showToast('Check-out must be after check-in.'); return; }
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'PUT',
+            data: { id, roomId, checkInDate: checkIn, checkOutDate: checkOut, totalPrice, status, notes },
+            success: function(res) {
+                if (res.success) {
+                    showToast(res.message || 'Reservation updated.');
+                    closeManageResModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Update failed.');
+                }
+            },
+            error: function() { showToast('Server error.'); }
+        });
+    }
+
+    function deleteReservationFromModal() {
+        const id = $('#manageResId').val();
+        if (!id) return;
+        if (!confirm('Delete this reservation? This cannot be undone.')) return;
+        $.ajax({
+            url: CTX + '/api/reservation', type: 'DELETE',
+            data: { id },
+            success: function(res) {
+                if (res.success) {
+                    showToast(res.message || 'Reservation deleted.');
+                    closeManageResModal();
+                    loadReservations();
+                } else {
+                    showToast(res.message || 'Delete failed.');
                 }
             },
             error: function() { showToast('Server error.'); }

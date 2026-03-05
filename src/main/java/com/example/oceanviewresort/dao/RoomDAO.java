@@ -4,6 +4,7 @@ import com.example.oceanviewresort.model.Room;
 import com.example.oceanviewresort.util.DBConnection;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -120,6 +121,36 @@ public class RoomDAO {
             System.err.println("[RoomDAO] countByStatus error: " + e.getMessage());
         }
         return 0;
+    }
+
+    /**
+     * Returns rooms that are 'available' AND have no overlapping confirmed reservations.
+     * @param checkIn  requested check-in date
+     * @param checkOut requested check-out date
+     * @param excludeReservationId reservation id to exclude from the overlap check; pass -1 to skip
+     */
+    public List<Room> findAvailableForDates(LocalDate checkIn, LocalDate checkOut, int excludeReservationId) {
+        List<Room> list = new ArrayList<>();
+        String sql = "SELECT r.id, r.room_number, r.type, r.price_per_night, r.capacity, r.status, r.description " +
+                     "FROM rooms r " +
+                     "WHERE r.status = 'available' " +
+                     "AND r.id NOT IN (" +
+                     "  SELECT rv.room_id FROM reservations rv " +
+                     "  WHERE rv.status NOT IN ('cancelled','checked_out') " +
+                     "  AND rv.check_in_date < ? AND rv.check_out_date > ? AND rv.id != ?" +
+                     ") ORDER BY r.room_number";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDate(1, java.sql.Date.valueOf(checkOut));  // overlap: check_in_date < checkOut
+            ps.setDate(2, java.sql.Date.valueOf(checkIn));   // overlap: check_out_date > checkIn
+            ps.setInt (3, excludeReservationId);            // exclude current reservation
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("[RoomDAO] findAvailableForDates error: " + e.getMessage());
+        }
+        return list;
     }
 
     // ---- private helper ----

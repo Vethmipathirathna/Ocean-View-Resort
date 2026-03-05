@@ -91,6 +91,38 @@ public class ReservationDAO {
         return 0;
     }
 
+    /** Update an existing reservation. Returns true on success. */
+    public boolean updateReservation(Reservation r) {
+        String sql = "UPDATE reservations SET room_id=?, check_in_date=?, check_out_date=?, total_price=?, status=?, notes=? WHERE id=?";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, r.getRoomId());
+            ps.setDate(2, Date.valueOf(r.getCheckInDate()));
+            ps.setDate(3, Date.valueOf(r.getCheckOutDate()));
+            ps.setBigDecimal(4, r.getTotalPrice());
+            ps.setString(5, r.getStatus());
+            ps.setString(6, r.getNotes());
+            ps.setInt(7, r.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /** Delete a reservation by id. Returns true on success. */
+    public boolean deleteReservation(int id) {
+        String sql = "DELETE FROM reservations WHERE id=?";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private Reservation mapRow(ResultSet rs) throws SQLException {
         Reservation r = new Reservation();
         r.setId(rs.getInt("id"));
